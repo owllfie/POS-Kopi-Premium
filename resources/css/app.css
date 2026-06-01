@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Outfit', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --color-coffee-dark: #2A1A17;
+    --color-coffee-medium: #4A3531;
+    --color-coffee-light: #8D6E63;
+    --color-coffee-cream: #FDFBF7;
+    --color-coffee-latte: #F5EFEB;
+    --color-coffee-gold: #D4AF37;
+    --color-coffee-text: #3E2723;
+}
+
+/* Custom premium styles */
+body {
+    background-color: var(--color-coffee-cream);
+    color: var(--color-coffee-text);
+}
+
+/* Custom Scrollbar for premium feel */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--color-coffee-latte);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-coffee-light);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-coffee-medium);
+}
+
+.coffee-glass {
+    background: rgba(253, 251, 247, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(141, 110, 99, 0.15);
+}
+
+.coffee-card {
+    background: #FFFFFF;
+    border: 1px solid var(--color-coffee-latte);
+    box-shadow: 0 4px 20px -2px rgba(74, 53, 49, 0.05);
+    transition: all 0.2s ease-in-out;
+}
+
+.coffee-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -2px rgba(74, 53, 49, 0.08);
+}
