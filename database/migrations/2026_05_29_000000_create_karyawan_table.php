@@ -36,7 +36,8 @@ return new class extends Migration
         // Seed default access rights for the 'karyawan' module
         // id_role 1 is superadmin, 2 is admin, 3 is manager, 4 is kasir, 5 is chef
         $exists = DB::table('aksess')->where('modul', 'karyawan')->exists();
-        if (!$exists) {
+        $rolesExist = DB::table('role')->count() > 0;
+        if (!$exists && $rolesExist) {
             DB::table('aksess')->insert([
                 ['id_role' => 1, 'modul' => 'karyawan', 'allowed' => '1', 'created_at' => now(), 'updated_at' => now()],
                 ['id_role' => 2, 'modul' => 'karyawan', 'allowed' => '1', 'created_at' => now(), 'updated_at' => now()],

@@ -87,17 +87,17 @@ class DatabaseSeeder extends Seeder
         $modules = [
             'dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 
             'users', 'menu', 'kategori', 'meja', 'shift', 'akses', 
-            'log', 'setting', 'backup', 'bahan_alat', 'properti'
+            'log', 'setting', 'backup', 'bahan_alat', 'properti', 'karyawan'
         ];
-
+ 
         // Seeding rules for each role
         // Superadmin gets everything (bypassed in model anyway, but seeded for completeness)
         foreach ($modules as $mod) {
             Aksess::create(['id_role' => 1, 'modul' => $mod, 'allowed' => '1']);
         }
-
+ 
         // Admin gets CRUDs and Operations, but not system configs
-        $adminAllowed = ['dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 'users', 'menu', 'kategori', 'meja', 'shift', 'bahan_alat', 'properti'];
+        $adminAllowed = ['dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 'users', 'menu', 'kategori', 'meja', 'shift', 'bahan_alat', 'properti', 'karyawan'];
         foreach ($modules as $mod) {
             $allowed = in_array($mod, $adminAllowed) ? '1' : '0';
             Aksess::create(['id_role' => 2, 'modul' => $mod, 'allowed' => $allowed]);
@@ -138,32 +138,42 @@ class DatabaseSeeder extends Seeder
         // 5. Menu Items (Coffee/Bakery themed matching brown palette)
         $menus = [
             // Coffee
-            ['nama_menu' => 'Espresso Single', 'id_kategori' => 1, 'harga' => 18000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Americano Classico', 'id_kategori' => 1, 'harga' => 22000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Velvet Cappuccino', 'id_kategori' => 1, 'harga' => 28000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Hazelnut Latte Macchiato', 'id_kategori' => 1, 'harga' => 32000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Caramel Fudge Macchiato', 'id_kategori' => 1, 'harga' => 34000, 'status' => 'tersedia'],
+            ['nama_menu' => 'Espresso Single', 'id_kategori' => 1, 'harga' => 18000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202148.png'],
+            ['nama_menu' => 'Americano Classico', 'id_kategori' => 1, 'harga' => 22000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202255.png'],
+            ['nama_menu' => 'Velvet Cappuccino', 'id_kategori' => 1, 'harga' => 28000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202416.png'],
+            ['nama_menu' => 'Hazelnut Latte Macchiato', 'id_kategori' => 1, 'harga' => 32000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202521.png'],
+            ['nama_menu' => 'Caramel Fudge Macchiato', 'id_kategori' => 1, 'harga' => 34000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202588.png'],
             
             // Non-Coffee
-            ['nama_menu' => 'Uji Matcha Latte', 'id_kategori' => 2, 'harga' => 30000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Belgian Double Chocolate', 'id_kategori' => 2, 'harga' => 28000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Earl Grey Milk Tea', 'id_kategori' => 2, 'harga' => 24000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Fresh Lemon Iced Tea', 'id_kategori' => 2, 'harga' => 20000, 'status' => 'tersedia'],
+            ['nama_menu' => 'Uji Matcha Latte', 'id_kategori' => 2, 'harga' => 30000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202664.png'],
+            ['nama_menu' => 'Belgian Double Chocolate', 'id_kategori' => 2, 'harga' => 28000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202734.png'],
+            ['nama_menu' => 'Earl Grey Milk Tea', 'id_kategori' => 2, 'harga' => 24000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202820.png'],
+            ['nama_menu' => 'Fresh Lemon Iced Tea', 'id_kategori' => 2, 'harga' => 20000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780202907.png'],
             
             // Pastry
-            ['nama_menu' => 'Flaky Butter Croissant', 'id_kategori' => 3, 'harga' => 22000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Pain au Chocolat', 'id_kategori' => 3, 'harga' => 26000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Warm Cinnamon Roll', 'id_kategori' => 3, 'harga' => 24000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Almond Cream Croissant', 'id_kategori' => 3, 'harga' => 28000, 'status' => 'habis'], // Seeded as 'habis' to test greyed out state
+            ['nama_menu' => 'Flaky Butter Croissant', 'id_kategori' => 3, 'harga' => 22000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780203112.png'],
+            ['nama_menu' => 'Pain au Chocolat', 'id_kategori' => 3, 'harga' => 26000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780203250.png'],
+            ['nama_menu' => 'Warm Cinnamon Roll', 'id_kategori' => 3, 'harga' => 24000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780203456.png'],
+            ['nama_menu' => 'Almond Cream Croissant', 'id_kategori' => 3, 'harga' => 28000, 'status' => 'habis', 'foto' => 'uploads/menu_1780203527.png'],
             
             // Dessert
-            ['nama_menu' => 'Classico Tiramisu Cup', 'id_kategori' => 4, 'harga' => 35000, 'status' => 'tersedia'],
-            ['nama_menu' => 'New York Baked Cheesecake', 'id_kategori' => 4, 'harga' => 38000, 'status' => 'tersedia'],
-            ['nama_menu' => 'Dark Chocolate Fudge Cake', 'id_kategori' => 4, 'harga' => 36000, 'status' => 'tersedia'],
+            ['nama_menu' => 'Classico Tiramisu Cup', 'id_kategori' => 4, 'harga' => 35000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780203593.png'],
+            
+            // Custom Coffee
+            ['nama_menu' => 'Kopi O', 'id_kategori' => 1, 'harga' => 15000, 'status' => 'tersedia', 'foto' => 'uploads/1780203740_kopi o.jpg'],
+            
+            // Cheesecake & Fudge Cake
+            ['nama_menu' => 'New York Baked Cheesecake', 'id_kategori' => 4, 'harga' => 38000, 'status' => 'tersedia', 'foto' => 'uploads/menu_1780203896.png'],
+            ['nama_menu' => 'Dark Chocolate Fudge Cake', 'id_kategori' => 4, 'harga' => 36000, 'status' => 'tersedia', 'foto' => null],
+            
+            // Custom Pastry & Dessert
+            ['nama_menu' => 'Curry Puff', 'id_kategori' => 3, 'harga' => 12000, 'status' => 'tersedia', 'foto' => 'uploads/1780204161_curry puff.jpg'],
+            ['nama_menu' => 'Egg Tart', 'id_kategori' => 4, 'harga' => 14000, 'status' => 'tersedia', 'foto' => 'uploads/1780204355_egg tart.jpg'],
         ];
         foreach ($menus as $m) {
             Menu::create($m);
         }
+
 
         // 6. Tables (Meja)
         for ($i = 1; $i <= 8; $i++) {

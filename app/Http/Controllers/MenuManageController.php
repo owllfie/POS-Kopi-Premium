@@ -21,13 +21,28 @@ class MenuManageController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'makanan');
+        $viewTrash = $tab === 'trash';
         $categoryId = $request->input('kategori_id', 'semua');
 
         $query = Menu::with('kategori');
 
         if ($viewTrash) {
             $query->onlyTrashed();
+        } else {
+            if ($tab === 'makanan') {
+                $query->whereHas('kategori', function ($q) {
+                    $q->whereIn('kategori', ['Pastry', 'Dessert']);
+                });
+            } elseif ($tab === 'minuman') {
+                $query->whereHas('kategori', function ($q) {
+                    $q->whereIn('kategori', ['Coffee', 'Non-Coffee']);
+                });
+            } elseif ($tab === 'paket') {
+                $query->whereHas('kategori', function ($q) {
+                    $q->where('kategori', 'Paket');
+                });
+            }
         }
 
         if ($categoryId !== 'semua') {
@@ -35,9 +50,29 @@ class MenuManageController extends Controller
         }
 
         $menus = $query->orderBy('nama_menu', 'asc')->paginate(12)->withQueryString();
-        $categories = Kategori::all();
+        
+        if ($tab === 'makanan') {
+            $categories = Kategori::whereIn('kategori', ['Pastry', 'Dessert'])->get();
+        } elseif ($tab === 'minuman') {
+            $categories = Kategori::whereIn('kategori', ['Coffee', 'Non-Coffee'])->get();
+        } elseif ($tab === 'paket') {
+            $categories = Kategori::where('kategori', 'Paket')->get();
+        } else {
+            $categories = Kategori::all();
+        }
 
-        return view('menu.index', compact('menus', 'categories', 'viewTrash', 'categoryId'));
+        $allFoods = [];
+        $allDrinks = [];
+        if ($tab === 'paket') {
+            $allFoods = Menu::whereHas('kategori', function ($q) {
+                $q->whereIn('kategori', ['Pastry', 'Dessert']);
+            })->get();
+            $allDrinks = Menu::whereHas('kategori', function ($q) {
+                $q->whereIn('kategori', ['Coffee', 'Non-Coffee']);
+            })->get();
+        }
+
+        return view('menu.index', compact('menus', 'categories', 'viewTrash', 'tab', 'categoryId', 'allFoods', 'allDrinks'));
     }
 
     public function store(Request $request)
@@ -49,7 +84,32 @@ class MenuManageController extends Controller
             'harga' => 'required|numeric|min:0',
             'status' => 'required|in:tersedia,habis',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'paket_makanan' => 'nullable|array',
+            'paket_minuman' => 'nullable|array',
+            'paket_addons' => 'nullable|string|max:500',
         ]);
+
+        if (!empty($validated['paket_makanan'])) {
+            foreach ($validated['paket_makanan'] as $id => $qty) {
+                if (!is_numeric($qty) || $qty < 1) {
+                    return back()->withErrors(['paket_makanan' => 'Jumlah makanan tidak valid.']);
+                }
+                if (!Menu::where('id_menu', $id)->exists()) {
+                    return back()->withErrors(['paket_makanan' => 'Makanan tidak ditemukan.']);
+                }
+            }
+        }
+
+        if (!empty($validated['paket_minuman'])) {
+            foreach ($validated['paket_minuman'] as $id => $qty) {
+                if (!is_numeric($qty) || $qty < 1) {
+                    return back()->withErrors(['paket_minuman' => 'Jumlah minuman tidak valid.']);
+                }
+                if (!Menu::where('id_menu', $id)->exists()) {
+                    return back()->withErrors(['paket_minuman' => 'Minuman tidak ditemukan.']);
+                }
+            }
+        }
 
         if ($request->hasFile('foto')) {
             // Simulated upload (just saving public path)
@@ -75,7 +135,32 @@ class MenuManageController extends Controller
             'harga' => 'required|numeric|min:0',
             'status' => 'required|in:tersedia,habis',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'paket_makanan' => 'nullable|array',
+            'paket_minuman' => 'nullable|array',
+            'paket_addons' => 'nullable|string|max:500',
         ]);
+
+        if (!empty($validated['paket_makanan'])) {
+            foreach ($validated['paket_makanan'] as $id => $qty) {
+                if (!is_numeric($qty) || $qty < 1) {
+                    return back()->withErrors(['paket_makanan' => 'Jumlah makanan tidak valid.']);
+                }
+                if (!Menu::where('id_menu', $id)->exists()) {
+                    return back()->withErrors(['paket_makanan' => 'Makanan tidak ditemukan.']);
+                }
+            }
+        }
+
+        if (!empty($validated['paket_minuman'])) {
+            foreach ($validated['paket_minuman'] as $id => $qty) {
+                if (!is_numeric($qty) || $qty < 1) {
+                    return back()->withErrors(['paket_minuman' => 'Jumlah minuman tidak valid.']);
+                }
+                if (!Menu::where('id_menu', $id)->exists()) {
+                    return back()->withErrors(['paket_minuman' => 'Minuman tidak ditemukan.']);
+                }
+            }
+        }
 
         if ($request->filled('cropped_image')) {
             $base64Image = $request->input('cropped_image');
