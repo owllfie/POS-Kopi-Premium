@@ -28,80 +28,131 @@
         @endif
     </div>
 
-    <!-- Meja Grid/Table -->
-    <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-sm">
-                <thead>
-                    <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
-                        <th class="pb-3">No. Meja</th>
-                        <th class="pb-3">Status</th>
-                        <th class="pb-3 text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
-                    @forelse($mejas as $m)
-                        @php
-                            $qrUrl = request()->getSchemeAndHttpHost() . '/menu/' . $m->qrcode_token;
-                        @endphp
-                        <tr>
-                            <td class="py-3.5 font-bold text-base text-coffee-dark">Meja {{ $m->nomor_meja }}</td>
-                            <td class="py-3.5">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider
-                                    {{ $m->status === 'kosong' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-coffee-light' }}"
-                                >
-                                    {{ $m->status }}
-                                </span>
-                            </td>
-                            <td class="py-3.5 text-right">
-                                <div class="flex justify-end gap-1.5">
-                                    @if(!$viewTrash)
-                                        <button @click="openQr('{{ $qrUrl }}', '{{ $m->nomor_meja }}')" class="p-1.5 rounded-lg hover:bg-slate-100 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Tampilkan QR Code">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12h.008v.008H15V12Zm2.25 0h.008v.008H17.25V12Zm-2.25 2.25h.008v.008H15v-.008Zm2.25 0h.008v.008H17.25v-.008Zm0 2.25h.008v.008H17.25V16.5Zm-2.25 0h.008v.008H15V16.5Zm-2.25-2.25h.008v.008H12.75v-.008Zm0 2.25h.008v.008H12.75V16.5Z" />
-                                            </svg>
-                                        </button>
-                                        <button @click="openEdit({{ json_encode($m) }})" class="p-1.5 rounded-lg hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Ubah Meja">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <form action="{{ route('meja.delete', $m->id_meja) }}" method="POST" onsubmit="return confirm('Hapus meja ini?')">
-                                            @csrf
-                                            <button type="submit" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus Meja">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
-                                        </form>
-                                    @else
-                                        <form action="{{ route('meja.restore', $m->id_meja) }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 transition cursor-pointer" title="Aktifkan Kembali">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                                            </button>
-                                        </form>
-                                        <form action="{{ route('meja.forceDelete', $m->id_meja) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN meja ini?')">
-                                            @csrf
-                                            <button type="submit" class="p-1.5 rounded-lg hover:bg-red-100 text-red-600 hover:text-red-700 transition cursor-pointer" title="Hapus Permanen">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </td>
+    @if($tab === 'active' || $tab === 'trash')
+        <!-- Meja Grid/Table -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3">No. Meja</th>
+                            <th class="pb-3">Status</th>
+                            <th class="pb-3 text-right">Aksi</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="3" class="py-8 text-center text-coffee-light font-medium">Tidak ada data meja.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
+                        @forelse($mejas as $m)
+                            @php
+                                $qrUrl = request()->getSchemeAndHttpHost() . '/menu/' . $m->qrcode_token;
+                            @endphp
+                            <tr>
+                                <td class="py-3.5 font-bold text-base text-coffee-dark">Meja {{ $m->nomor_meja }}</td>
+                                <td class="py-3.5">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider
+                                        {{ $m->status === 'kosong' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-coffee-light' }}"
+                                    >
+                                        {{ $m->status }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5 text-right">
+                                    <div class="flex justify-end gap-1.5">
+                                        @if($tab === 'active')
+                                            <button @click="openQr('{{ $qrUrl }}', '{{ $m->nomor_meja }}')" class="p-1.5 rounded-lg hover:bg-slate-100 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Tampilkan QR Code">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12h.008v.008H15V12Zm2.25 0h.008v.008H17.25V12Zm-2.25 2.25h.008v.008H15v-.008Zm2.25 0h.008v.008H17.25v-.008Zm0 2.25h.008v.008H17.25V16.5Zm-2.25 0h.008v.008H15V16.5Zm-2.25-2.25h.008v.008H12.75v-.008Zm0 2.25h.008v.008H12.75V16.5Z" />
+                                                </svg>
+                                            </button>
+                                            <button @click="openEdit({{ json_encode($m) }})" class="p-1.5 rounded-lg hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Ubah Meja">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </button>
+                                            <form action="{{ route('meja.delete', $m->id_meja) }}" method="POST" onsubmit="return confirm('Hapus meja ini?')">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus Meja">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form action="{{ route('meja.restore', $m->id_meja) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 transition cursor-pointer" title="Aktifkan Kembali">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('meja.forceDelete', $m->id_meja) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN meja ini?')">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-red-100 text-red-600 hover:text-red-700 transition cursor-pointer" title="Hapus Permanen">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="py-8 text-center text-coffee-light font-medium">Tidak ada data meja.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <!-- Pagination Links -->
-    <div class="mt-6 no-print">
-        {{ $mejas->links() }}
-    </div>
+        <!-- Pagination Links -->
+        <div class="mt-6 no-print">
+            {{ $mejas->links() }}
+        </div>
+    @endif
+
+    @if($tab === 'history')
+        <!-- History Table -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3">Waktu</th>
+                            <th class="pb-3">ID Record</th>
+                            <th class="pb-3">Perubahan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
+                        @forelse($historyUpdates as $h)
+                            <tr>
+                                <td class="py-3.5 text-xs">{{ $h->created_at->format('d M Y H:i:s') }}</td>
+                                <td class="py-3.5 text-xs font-bold">#{{ $h->record_id }}</td>
+                                <td class="py-3.5 text-xs space-y-1">
+                                    @php
+                                        $oldData = json_decode($h->data_lama, true) ?? [];
+                                        $newData = json_decode($h->data_baru, true) ?? [];
+                                    @endphp
+                                    @foreach($newData as $key => $newVal)
+                                        @php $oldVal = $oldData[$key] ?? 'N/A'; @endphp
+                                        <div>
+                                            <span class="font-bold text-coffee-medium">{{ $key }}:</span> 
+                                            <span class="text-rose-500 line-through">{{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}</span>
+                                            <span class="text-coffee-light mx-1">&rarr;</span>
+                                            <span class="text-emerald-600">{{ is_array($newVal) ? json_encode($newVal) : $newVal }}</span>
+                                        </div>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="py-8 text-center text-coffee-light font-medium">Tidak ada riwayat perubahan.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination Links for History -->
+        <div class="mt-6 no-print">
+            {{ $historyUpdates->links() }}
+        </div>
+    @endif
 
     <!-- ADD MEJA MODAL -->
     <template x-teleport="body">

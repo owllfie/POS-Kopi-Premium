@@ -20,17 +20,25 @@ class KategoriController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
 
         $query = Kategori::withCount('menus');
 
-        if ($viewTrash) {
+        if ($tab === 'trash') {
             $query->onlyTrashed();
         }
 
         $categories = $query->orderBy('kategori', 'asc')->paginate(10)->withQueryString();
 
-        return view('kategori.index', compact('categories', 'viewTrash'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'kategori')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('kategori.index', compact('categories', 'tab', 'historyUpdates'));
     }
 
     public function store(Request $request)

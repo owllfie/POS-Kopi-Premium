@@ -10,121 +10,193 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <!-- Tabs -->
         <div class="flex border-b border-coffee-latte">
-            <a href="{{ route('promo.index', ['trash' => '0']) }}" class="px-6 py-2.5 font-bold text-xs border-b-2 transition {{ !$viewTrash ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
+            <a href="{{ route('promo.index', ['tab' => 'active']) }}" class="px-6 py-2.5 font-bold text-xs border-b-2 transition {{ $tab === 'active' ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
                 Promo Aktif
             </a>
-            <a href="{{ route('promo.index', ['trash' => '1']) }}" class="px-6 py-2.5 font-bold text-xs border-b-2 transition {{ $viewTrash ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
+            <a href="{{ route('promo.index', ['tab' => 'trash']) }}" class="px-6 py-2.5 font-bold text-xs border-b-2 transition {{ $tab === 'trash' ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
                 Tong Sampah
+            </a>
+            <a href="{{ route('promo.index', ['tab' => 'history']) }}" class="px-6 py-2.5 font-bold text-xs border-b-2 transition {{ $tab === 'history' ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
+                Riwayat Perubahan
             </a>
         </div>
 
-        @if(!$viewTrash)
+        @if($tab === 'active')
             <button @click="addModal = true" class="px-4 py-2 bg-coffee-dark text-white rounded-xl text-xs font-bold hover:bg-coffee-medium transition shadow flex items-center gap-1.5 cursor-pointer">
                 <span>Tambah Promo Baru</span>
             </button>
         @endif
     </div>
 
-    <!-- Promo Grid/Table -->
-    <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-sm">
-                <thead>
-                    <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
-                        <th class="pb-3">Nama Promo</th>
-                        <th class="pb-3">Tipe</th>
-                        <th class="pb-3">Potongan</th>
-                        <th class="pb-3">Periode</th>
-                        <th class="pb-3">Status</th>
-                        <th class="pb-3 text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
-                    @forelse($promos as $p)
-                        <tr>
-                            <td class="py-3.5">
-                                <div class="font-bold text-coffee-dark">{{ $p->nama_promo }}</div>
-                                <div class="text-xs text-coffee-light">{{ $p->deskripsi ?? '-' }}</div>
-                                @if($p->menu_ids && count($p->menu_ids) > 0)
-                                    <div class="flex flex-wrap gap-1 mt-1.5">
-                                        <span class="text-[9px] font-bold text-coffee-light uppercase tracking-wider block mr-1 self-center">Berlaku:</span>
-                                        @foreach($p->menu_ids as $mId)
-                                            @php $menuItem = $menus->firstWhere('id_menu', $mId); @endphp
-                                            @if($menuItem)
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 border border-amber-200 text-coffee-light">{{ $menuItem->nama_menu }}</span>
-                                            @endif
-                                        @endforeach
+    @if($tab === 'active' || $tab === 'trash')
+        <!-- Promo Grid/Table -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3">Nama Promo</th>
+                            <th class="pb-3">Tipe</th>
+                            <th class="pb-3">Potongan</th>
+                            <th class="pb-3">Periode</th>
+                            <th class="pb-3">Status</th>
+                            <th class="pb-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
+                        @forelse($promos as $p)
+                            <tr>
+                                <td class="py-3.5">
+                                    <div class="font-bold text-coffee-dark">{{ $p->nama_promo }}</div>
+                                    <div class="text-xs text-coffee-light">{{ $p->deskripsi ?? '-' }}</div>
+                                    @if($p->menu_ids && count($p->menu_ids) > 0)
+                                        <div class="flex flex-wrap gap-1 mt-1.5">
+                                            <span class="text-[9px] font-bold text-coffee-light uppercase tracking-wider block mr-1 self-center">Berlaku:</span>
+                                            @foreach($p->menu_ids as $mId)
+                                                @php $menuItem = $menus->firstWhere('id_menu', $mId); @endphp
+                                                @if($menuItem)
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 border border-amber-200 text-coffee-light">{{ $menuItem->nama_menu }}</span>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="py-3.5">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider bg-slate-50 border-slate-200 text-slate-700">
+                                        {{ $p->tipe_promo }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5">
+                                    <span class="font-bold text-coffee-dark">
+                                        @if($p->tipe_potongan === 'persen')
+                                            {{ $p->nominal_potongan }}%
+                                        @else
+                                            Rp {{ number_format($p->nominal_potongan, 0, ',', '.') }}
+                                        @endif
+                                    </span>
+                                </td>
+                                <td class="py-3.5 text-xs">
+                                    <div>Mulai: {{ $p->start_time ? $p->start_time->format('d M Y H:i') : 'Selamanya' }}</div>
+                                    <div>Selesai: {{ $p->end_time ? $p->end_time->format('d M Y H:i') : 'Selamanya' }}</div>
+                                </td>
+                                <td class="py-3.5">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider
+                                        {{ $p->status === 'Aktif' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800' }}"
+                                    >
+                                        {{ $p->status }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5 text-right">
+                                    <div class="flex justify-end gap-1.5">
+                                        @if($tab === 'active')
+                                            <button @click="openEdit({{ json_encode($p) }})" class="p-1.5 rounded-lg hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Ubah Promo">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </button>
+                                            <form action="{{ route('promo.delete', $p->id_promo) }}" method="POST" onsubmit="return confirm('Pindahkan promo ini ke tong sampah?')">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus Promo">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form action="{{ route('promo.restore', $p->id_promo) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 transition cursor-pointer" title="Aktifkan Kembali">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('promo.force-delete', $p->id_promo) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN promo ini?')">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-red-100 text-red-600 hover:text-red-700 transition cursor-pointer" title="Hapus Permanen">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
-                                @endif
-                            </td>
-                            <td class="py-3.5">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider bg-slate-50 border-slate-200 text-slate-700">
-                                    {{ $p->tipe_promo }}
-                                </span>
-                            </td>
-                            <td class="py-3.5">
-                                <span class="font-bold text-coffee-dark">
-                                    @if($p->tipe_potongan === 'persen')
-                                        {{ $p->nominal_potongan }}%
-                                    @else
-                                        Rp {{ number_format($p->nominal_potongan, 0, ',', '.') }}
-                                    @endif
-                                </span>
-                            </td>
-                            <td class="py-3.5 text-xs">
-                                <div>Mulai: {{ $p->start_time ? $p->start_time->format('d M Y H:i') : 'Selamanya' }}</div>
-                                <div>Selesai: {{ $p->end_time ? $p->end_time->format('d M Y H:i') : 'Selamanya' }}</div>
-                            </td>
-                            <td class="py-3.5">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider
-                                    {{ $p->status === 'Aktif' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800' }}"
-                                >
-                                    {{ $p->status }}
-                                </span>
-                            </td>
-                            <td class="py-3.5 text-right">
-                                <div class="flex justify-end gap-1.5">
-                                    @if(!$viewTrash)
-                                        <button @click="openEdit({{ json_encode($p) }})" class="p-1.5 rounded-lg hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Ubah Promo">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <form action="{{ route('promo.delete', $p->id_promo) }}" method="POST" onsubmit="return confirm('Pindahkan promo ini ke tong sampah?')">
-                                            @csrf
-                                            <button type="submit" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus Promo">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
-                                        </form>
-                                    @else
-                                        <form action="{{ route('promo.restore', $p->id_promo) }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 transition cursor-pointer" title="Aktifkan Kembali">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                                            </button>
-                                        </form>
-                                        <form action="{{ route('promo.force-delete', $p->id_promo) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN promo ini?')">
-                                            @csrf
-                                            <button type="submit" class="p-1.5 rounded-lg hover:bg-red-100 text-red-600 hover:text-red-700 transition cursor-pointer" title="Hapus Permanen">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="py-8 text-center text-coffee-light font-medium">Tidak ada data promo.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-coffee-light font-medium">Tidak ada data promo.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <!-- Pagination Links -->
-    <div class="mt-6 no-print">
-        {{ $promos->links() }}
-    </div>
+        <!-- Pagination Links -->
+        <div class="mt-6 no-print">
+            {{ $promos->links() }}
+        </div>
+    @endif
+
+    @if($tab === 'history')
+        <!-- History Table -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3">Waktu</th>
+                            <th class="pb-3">ID Record</th>
+                            <th class="pb-3">Perubahan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
+                        @forelse($historyUpdates as $h)
+                            <tr>
+                                <td class="py-3.5 text-xs">{{ $h->created_at->format('d M Y H:i:s') }}</td>
+                                <td class="py-3.5 text-xs font-bold">#{{ $h->record_id }}</td>
+                                <td class="py-3.5 text-xs space-y-1">
+                                    @php
+                                        $oldData = json_decode($h->data_lama, true) ?? [];
+                                        $newData = json_decode($h->data_baru, true) ?? [];
+                                    @endphp
+                                    @foreach($newData as $key => $newVal)
+                                        @php $oldVal = $oldData[$key] ?? 'N/A'; @endphp
+                                        <div>
+                                            <span class="font-bold text-coffee-medium">{{ $key }}:</span>
+                                            <span class="text-rose-500 line-through">
+                                                @if($key === 'menu_ids' && is_array($oldVal))
+                                                    @php
+                                                        $names = collect($oldVal)->map(fn($id) => optional($menus->firstWhere('id_menu', $id))->nama_menu ?? $id)->implode(', ');
+                                                    @endphp
+                                                    [{{ $names ?: 'Semua Menu' }}]
+                                                @else
+                                                    {{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}
+                                                @endif
+                                            </span>
+                                            <span class="text-coffee-light mx-1">&rarr;</span>
+                                            <span class="text-emerald-600">
+                                                @if($key === 'menu_ids' && is_array($newVal))
+                                                    @php
+                                                        $names = collect($newVal)->map(fn($id) => optional($menus->firstWhere('id_menu', $id))->nama_menu ?? $id)->implode(', ');
+                                                    @endphp
+                                                    [{{ $names ?: 'Semua Menu' }}]
+                                                @else
+                                                    {{ is_array($newVal) ? json_encode($newVal) : $newVal }}
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="py-8 text-center text-coffee-light font-medium">Tidak ada riwayat perubahan.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination Links for History -->
+        <div class="mt-6 no-print">
+            {{ $historyUpdates->links() }}
+        </div>
+    @endif
 
     <!-- ADD PROMO MODAL -->
     <template x-teleport="body">

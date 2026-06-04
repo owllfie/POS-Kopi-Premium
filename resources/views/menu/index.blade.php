@@ -23,9 +23,12 @@
                 <a href="{{ route('menu.index', ['tab' => 'trash', 'kategori_id' => 'semua']) }}" class="px-5 py-2.5 font-bold text-xs border-b-2 transition {{ $tab === 'trash' ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
                     Tong Sampah (Trash)
                 </a>
+                <a href="{{ route('menu.index', ['tab' => 'history']) }}" class="px-5 py-2.5 font-bold text-xs border-b-2 transition {{ $tab === 'history' ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
+                    Riwayat Perubahan
+                </a>
             </div>
 
-            @if($tab !== 'paket')
+            @if($tab !== 'paket' && $tab !== 'history')
                 <!-- Category Filter dropdown -->
                 <form action="{{ route('menu.index') }}" method="GET" class="flex items-center gap-2">
                     <input type="hidden" name="tab" value="{{ $tab }}">
@@ -46,102 +49,165 @@
         @endif
     </div>
 
-    <!-- Menus Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        @forelse($menus as $menu)
-            <div class="bg-white rounded-2xl border border-coffee-latte p-4 flex gap-4 coffee-card relative {{ $menu->status === 'habis' ? 'opacity-65' : '' }}">
-                <!-- Menu Icon/Photo -->
-                <div class="w-20 h-20 rounded-xl bg-coffee-latte flex items-center justify-center text-coffee-medium border border-coffee-latte flex-shrink-0">
-                    @if($menu->foto)
-                        <img src="{{ str_starts_with($menu->foto, 'http') ? $menu->foto : asset($menu->foto) }}" alt="{{ $menu->nama_menu }}" class="w-full h-full object-cover rounded-xl">
-                    @else
-                        <!-- Fork knife SVG -->
-                        <svg class="w-10 h-10 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                    @endif
-                </div>
-
-                <div class="flex-grow flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between gap-1">
-                            <h4 class="text-sm font-bold text-coffee-dark leading-tight">{{ $menu->nama_menu }}</h4>
-                            
-                            <!-- Toggle availability button -->
-                            @if(!$viewTrash)
-                                <form action="{{ route('menu.toggleStatus', $menu->id_menu) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide border transition cursor-pointer
-                                        {{ $menu->status === 'tersedia' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100' : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' }}"
-                                        title="Klik untuk mengubah status"
-                                    >
-                                        {{ $menu->status }}
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-                        <span class="text-[10px] text-coffee-light font-bold uppercase tracking-wider block mt-0.5">{{ $menu->kategori ? $menu->kategori->kategori : 'Tanpa Kategori' }}</span>
-                        
-                        @if($menu->kategori && $menu->kategori->kategori === 'Paket')
-                            <div class="mt-2 text-[10px] text-coffee-medium space-y-0.5 border-t border-coffee-latte/30 pt-1.5">
-                                @php
-                                    $foodNames = $menu->getPaketMakananNames();
-                                    $drinkNames = $menu->getPaketMinumanNames();
-                                @endphp
-                                @if(!empty($foodNames))
-                                    <div><span class="font-bold">Makanan:</span> {{ implode(', ', $foodNames) }}</div>
-                                @endif
-                                @if(!empty($drinkNames))
-                                    <div><span class="font-bold">Minuman:</span> {{ implode(', ', $drinkNames) }}</div>
-                                @endif
-                                @if(!empty($menu->paket_addons))
-                                    <div><span class="font-bold">Add-on:</span> {{ $menu->paket_addons }}</div>
-                                @endif
-                            </div>
+    @if($tab !== 'history')
+        <!-- Menus Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @forelse($menus as $menu)
+                <div class="bg-white rounded-2xl border border-coffee-latte p-4 flex gap-4 coffee-card relative {{ $menu->status === 'habis' ? 'opacity-65' : '' }}">
+                    <!-- Menu Icon/Photo -->
+                    <div class="w-20 h-20 rounded-xl bg-coffee-latte flex items-center justify-center text-coffee-medium border border-coffee-latte flex-shrink-0">
+                        @if($menu->foto)
+                            <img src="{{ str_starts_with($menu->foto, 'http') ? $menu->foto : asset($menu->foto) }}" alt="{{ $menu->nama_menu }}" class="w-full h-full object-cover rounded-xl">
+                        @else
+                            <!-- Fork knife SVG -->
+                            <svg class="w-10 h-10 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                         @endif
                     </div>
 
-                    <div class="flex items-center justify-between mt-3 pt-2 border-t border-coffee-latte/50">
-                        <strong class="text-xs font-bold text-coffee-medium">Rp {{ number_format($menu->harga, 0, ',', '.') }}</strong>
-                        
-                        <!-- Actions -->
-                        <div class="flex gap-1">
-                            @if(!$viewTrash)
-                                <button @click="openEdit({{ json_encode($menu) }})" class="p-1 rounded hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Edit Menu">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                </button>
-                                <form action="{{ route('menu.delete', $menu->id_menu) }}" method="POST" onsubmit="return confirm('Hapus menu ini?')">
-                                    @csrf
-                                    <button type="submit" class="p-1 rounded hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus Menu">
+                    <div class="flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-start justify-between gap-1">
+                                <h4 class="text-sm font-bold text-coffee-dark leading-tight">{{ $menu->nama_menu }}</h4>
+                                
+                                <!-- Toggle availability button -->
+                                @if(!$viewTrash)
+                                    <form action="{{ route('menu.toggleStatus', $menu->id_menu) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide border transition cursor-pointer
+                                            {{ $menu->status === 'tersedia' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100' : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' }}"
+                                            title="Klik untuk mengubah status"
+                                        >
+                                            {{ $menu->status }}
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                            <span class="text-[10px] text-coffee-light font-bold uppercase tracking-wider block mt-0.5">{{ $menu->kategori ? $menu->kategori->kategori : 'Tanpa Kategori' }}</span>
+                            
+                            @if($menu->kategori && $menu->kategori->kategori === 'Paket')
+                                <div class="mt-2 text-[10px] text-coffee-medium space-y-0.5 border-t border-coffee-latte/30 pt-1.5">
+                                    @php
+                                        $foodNames = $menu->getPaketMakananNames();
+                                        $drinkNames = $menu->getPaketMinumanNames();
+                                    @endphp
+                                    @if(!empty($foodNames))
+                                        <div><span class="font-bold">Makanan:</span> {{ implode(', ', $foodNames) }}</div>
+                                    @endif
+                                    @if(!empty($drinkNames))
+                                        <div><span class="font-bold">Minuman:</span> {{ implode(', ', $drinkNames) }}</div>
+                                    @endif
+                                    @if(!empty($menu->paket_addons))
+                                        <div><span class="font-bold">Add-on:</span> {{ $menu->paket_addons }}</div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center justify-between mt-3 pt-2 border-t border-coffee-latte/50">
+                            <strong class="text-xs font-bold text-coffee-medium">Rp {{ number_format($menu->harga, 0, ',', '.') }}</strong>
+                            
+                            <!-- Actions -->
+                            <div class="flex gap-1">
+                                @if(!$viewTrash)
+                                    <button @click="openEdit({{ json_encode($menu) }})" class="p-1 rounded hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Edit Menu">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </button>
+                                    <form action="{{ route('menu.delete', $menu->id_menu) }}" method="POST" onsubmit="return confirm('Hapus menu ini?')">
+                                        @csrf
+                                        <button type="submit" class="p-1 rounded hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus Menu">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </form>
+                                @else
+                                    <!-- RESTORE/DELETE ACTIONS HIDDEN OR INACTIVE PER USER GUIDELINE TO PREVENT RESTORING/DELETING TRASH ITEMS -->
+                                    <button type="button" onclick="alert('Peringatan: Mengambil kembali data dari trash dilarang pada langkah ini.')" class="p-1 rounded hover:bg-emerald-50 text-emerald-600/50 transition cursor-not-allowed" title="Restore Dinonaktifkan">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                    </button>
+                                    <button type="button" onclick="alert('Peringatan: Menghapus permanen data dari trash dilarang pada langkah ini.')" class="p-1 rounded hover:bg-red-100 text-red-600/50 transition cursor-not-allowed" title="Hapus Permanen Dinonaktifkan">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
-                                </form>
-                            @else
-                                <!-- RESTORE/DELETE ACTIONS HIDDEN OR INACTIVE PER USER GUIDELINE TO PREVENT RESTORING/DELETING TRASH ITEMS -->
-                                <button type="button" onclick="alert('Peringatan: Mengambil kembali data dari trash dilarang pada langkah ini.')" class="p-1 rounded hover:bg-emerald-50 text-emerald-600/50 transition cursor-not-allowed" title="Restore Dinonaktifkan">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                                </button>
-                                <button type="button" onclick="alert('Peringatan: Menghapus permanen data dari trash dilarang pada langkah ini.')" class="p-1 rounded hover:bg-red-100 text-red-600/50 transition cursor-not-allowed" title="Hapus Permanen Dinonaktifkan">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                            @endif
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        @empty
-            <div class="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-20 bg-white rounded-3xl border border-coffee-latte coffee-card">
-                <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-coffee-medium mx-auto mb-4 border border-amber-100">
-                    <svg class="w-8 h-8 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            @empty
+                <div class="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-20 bg-white rounded-3xl border border-coffee-latte coffee-card">
+                    <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-coffee-medium mx-auto mb-4 border border-amber-100">
+                        <svg class="w-8 h-8 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    </div>
+                    <h3 class="font-bold text-coffee-dark">Menu Kosong</h3>
+                    <p class="text-xs text-coffee-light font-medium mt-1">Belum ada item hidangan terdaftar sesuai filter.</p>
                 </div>
-                <h3 class="font-bold text-coffee-dark">Menu Kosong</h3>
-                <p class="text-xs text-coffee-light font-medium mt-1">Belum ada item hidangan terdaftar sesuai filter.</p>
-            </div>
-        @endforelse
-    </div>
+            @endforelse
+        </div>
 
-    <!-- Pagination Links -->
-    <div class="mt-6 no-print">
-        {{ $menus->links() }}
-    </div>
+        <!-- Pagination Links -->
+        <div class="mt-6 no-print">
+            {{ $menus->links() }}
+        </div>
+    @else
+        <!-- History Table -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3">Waktu</th>
+                            <th class="pb-3">ID Record</th>
+                            <th class="pb-3">Perubahan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
+                        @forelse($historyUpdates as $h)
+                            <tr>
+                                <td class="py-3.5 text-xs">{{ $h->created_at->format('d M Y H:i:s') }}</td>
+                                <td class="py-3.5 text-xs font-bold">#{{ $h->record_id }}</td>
+                                <td class="py-3.5 text-xs space-y-1">
+                                    @php
+                                        $oldData = json_decode($h->data_lama, true) ?? [];
+                                        $newData = json_decode($h->data_baru, true) ?? [];
+                                    @endphp
+                                    @foreach($newData as $key => $newVal)
+                                        @php $oldVal = $oldData[$key] ?? 'N/A'; @endphp
+                                        <div>
+                                            <span class="font-bold text-coffee-medium">{{ $key }}:</span> 
+                                            <span class="text-rose-500 line-through">
+                                                @if($key === 'id_kategori')
+                                                    @php $oldCat = \App\Models\Kategori::find($oldVal); @endphp
+                                                    {{ $oldCat ? $oldCat->kategori : $oldVal }}
+                                                @else
+                                                    {{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}
+                                                @endif
+                                            </span>
+                                            <span class="text-coffee-light mx-1">&rarr;</span>
+                                            <span class="text-emerald-600">
+                                                @if($key === 'id_kategori')
+                                                    @php $newCat = \App\Models\Kategori::find($newVal); @endphp
+                                                    {{ $newCat ? $newCat->kategori : $newVal }}
+                                                @else
+                                                    {{ is_array($newVal) ? json_encode($newVal) : $newVal }}
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="py-8 text-center text-coffee-light font-medium">Tidak ada riwayat perubahan.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination Links for History -->
+        <div class="mt-6 no-print">
+            {{ $historyUpdates->links() }}
+        </div>
+    @endif
 
     <!-- ADD MENU MODAL -->
     <template x-teleport="body">

@@ -157,6 +157,8 @@ Route::prefix('bahan-alat')->name('bahan-alat.')->group(function () {
     Route::post('/store', [\App\Http\Controllers\BahanAlatController::class, 'store'])->name('store');
     Route::post('/update/{id}', [\App\Http\Controllers\BahanAlatController::class, 'update'])->name('update');
     Route::post('/delete/{id}', [\App\Http\Controllers\BahanAlatController::class, 'delete'])->name('delete');
+    Route::post('/restore/{id}', [\App\Http\Controllers\BahanAlatController::class, 'restore'])->name('restore');
+    Route::post('/force-delete/{id}', [\App\Http\Controllers\BahanAlatController::class, 'forceDelete'])->name('force-delete');
 });
 
 Route::prefix('properti')->name('properti.')->group(function () {
@@ -164,6 +166,8 @@ Route::prefix('properti')->name('properti.')->group(function () {
     Route::post('/store', [\App\Http\Controllers\PropertiController::class, 'store'])->name('store');
     Route::post('/update/{id}', [\App\Http\Controllers\PropertiController::class, 'update'])->name('update');
     Route::post('/delete/{id}', [\App\Http\Controllers\PropertiController::class, 'delete'])->name('delete');
+    Route::post('/restore/{id}', [\App\Http\Controllers\PropertiController::class, 'restore'])->name('restore');
+    Route::post('/force-delete/{id}', [\App\Http\Controllers\PropertiController::class, 'forceDelete'])->name('force-delete');
 });
 
 Route::post('/laporan/ledger/store', [ReportController::class, 'storeLedger'])->name('laporan.ledger.store');

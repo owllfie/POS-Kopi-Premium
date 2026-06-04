@@ -19,18 +19,26 @@ class PromoController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
 
         $query = Promo::query();
 
-        if ($viewTrash) {
+        if ($tab === 'trash') {
             $query->onlyTrashed();
         }
 
         $promos = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $menus = \App\Models\Menu::orderBy('nama_menu', 'asc')->get();
 
-        return view('promo.index', compact('promos', 'viewTrash', 'menus'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'promo')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('promo.index', compact('promos', 'tab', 'menus', 'historyUpdates'));
     }
 
     public function store(Request $request)

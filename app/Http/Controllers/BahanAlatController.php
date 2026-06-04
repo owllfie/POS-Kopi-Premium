@@ -20,9 +20,17 @@ class BahanAlatController extends Controller
 
     public function index(Request $request)
     {
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
         $kategori = $request->input('kategori', 'semua');
 
         $query = BahanAlat::where('tipe', 'bahan');
+
+        if ($tab === 'trash') {
+            $query->onlyTrashed();
+        }
 
         if ($kategori !== 'semua') {
             $query->where('kategori', $kategori);
@@ -36,7 +44,12 @@ class BahanAlatController extends Controller
             ->distinct()
             ->pluck('kategori');
 
-        return view('bahan_alat.index', compact('items', 'categories', 'kategori'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'bahan_alat')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('bahan_alat.index', compact('items', 'categories', 'kategori', 'tab', 'historyUpdates'));
     }
 
     public function store(Request $request)
@@ -106,5 +119,38 @@ class BahanAlatController extends Controller
         ]);
 
         return back()->with('success', 'Bahan berhasil dihapus dari inventaris.');
+    }
+
+    public function restore(Request $request, $id)
+    {
+        $user = $this->getActiveUser();
+        $item = BahanAlat::onlyTrashed()->where('tipe', 'bahan')->findOrFail($id);
+        $item->restore();
+
+        ActivityLog::create([
+            'id_user' => $user ? $user->id_user : null,
+            'aktivitas' => 'RESTORE_INVENTORY_ITEM',
+            'detail_aktivitas' => "Restored inventory ingredient {$item->nama_item}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Bahan berhasil dikembalikan ke inventaris.');
+    }
+
+    public function forceDelete(Request $request, $id)
+    {
+        $user = $this->getActiveUser();
+        $item = BahanAlat::onlyTrashed()->where('tipe', 'bahan')->findOrFail($id);
+        $name = $item->nama_item;
+        $item->forceDelete();
+
+        ActivityLog::create([
+            'id_user' => $user ? $user->id_user : null,
+            'aktivitas' => 'FORCE_DELETE_INVENTORY_ITEM',
+            'detail_aktivitas' => "Force-deleted inventory ingredient {$name}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Bahan berhasil dihapus secara permanen.');
     }
 }

@@ -20,12 +20,15 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
 
         // Load internal users, excluding superadmins (id_role = 1)
         $query = User::where('id_role', '!=', 1)->with('role');
 
-        if ($viewTrash) {
+        if ($tab === 'trash') {
             $query->onlyTrashed();
         }
 
@@ -34,7 +37,12 @@ class UserController extends Controller
         // Exclude superadmin role from assignments dropdown
         $roles = Role::where('id_role', '!=', 1)->get();
 
-        return view('users.index', compact('users', 'roles', 'viewTrash'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'users')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('users.index', compact('users', 'roles', 'tab', 'historyUpdates'));
     }
 
     public function store(Request $request)

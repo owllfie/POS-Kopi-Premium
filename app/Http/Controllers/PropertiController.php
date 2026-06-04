@@ -20,9 +20,17 @@ class PropertiController extends Controller
 
     public function index(Request $request)
     {
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
         $kategori = $request->input('kategori', 'semua');
 
         $query = BahanAlat::whereIn('tipe', ['properti', 'alat']);
+
+        if ($tab === 'trash') {
+            $query->onlyTrashed();
+        }
 
         if ($kategori !== 'semua') {
             $query->where('kategori', $kategori);
@@ -36,7 +44,12 @@ class PropertiController extends Controller
             ->distinct()
             ->pluck('kategori');
 
-        return view('properti.index', compact('items', 'categories', 'kategori'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'bahan_alat')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('properti.index', compact('items', 'categories', 'kategori', 'tab', 'historyUpdates'));
     }
 
     public function store(Request $request)
@@ -120,5 +133,38 @@ class PropertiController extends Controller
         ]);
 
         return back()->with('success', 'Properti / Peralatan berhasil dihapus.');
+    }
+
+    public function restore(Request $request, $id)
+    {
+        $user = $this->getActiveUser();
+        $item = BahanAlat::onlyTrashed()->whereIn('tipe', ['properti', 'alat'])->findOrFail($id);
+        $item->restore();
+
+        ActivityLog::create([
+            'id_user' => $user ? $user->id_user : null,
+            'aktivitas' => 'RESTORE_PROPERTY_ITEM',
+            'detail_aktivitas' => "Restored property item {$item->nama_item} (type: {$item->tipe})",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Properti / Peralatan berhasil dikembalikan.');
+    }
+
+    public function forceDelete(Request $request, $id)
+    {
+        $user = $this->getActiveUser();
+        $item = BahanAlat::onlyTrashed()->whereIn('tipe', ['properti', 'alat'])->findOrFail($id);
+        $name = $item->nama_item;
+        $item->forceDelete();
+
+        ActivityLog::create([
+            'id_user' => $user ? $user->id_user : null,
+            'aktivitas' => 'FORCE_DELETE_PROPERTY_ITEM',
+            'detail_aktivitas' => "Force-deleted property item {$name}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Properti / Peralatan berhasil dihapus secara permanen.');
     }
 }

@@ -21,17 +21,25 @@ class ShiftController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
 
         $query = Shift::with('user');
 
-        if ($viewTrash) {
+        if ($tab === 'trash') {
             $query->onlyTrashed();
         }
 
         $shifts = $query->orderBy('jam_mulai', 'desc')->paginate(15)->withQueryString();
 
-        return view('shift.index', compact('shifts', 'viewTrash'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'shift')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('shift.index', compact('shifts', 'tab', 'historyUpdates'));
     }
 
     public function update(Request $request, $id)

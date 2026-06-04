@@ -72,7 +72,12 @@ class MenuManageController extends Controller
             })->get();
         }
 
-        return view('menu.index', compact('menus', 'categories', 'viewTrash', 'tab', 'categoryId', 'allFoods', 'allDrinks'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'menu')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('menu.index', compact('menus', 'categories', 'viewTrash', 'tab', 'categoryId', 'allFoods', 'allDrinks', 'historyUpdates'));
     }
 
     public function store(Request $request)
