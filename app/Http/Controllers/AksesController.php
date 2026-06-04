@@ -38,6 +38,8 @@ class AksesController extends Controller
             'bahan_alat' => 'Bahan',
             'properti' => 'Properti Cafe',
             'shift' => 'Kelola Shift Kasir',
+            'promo' => 'Kelola Promo',
+            'jabatan' => 'Kelola Jabatan Karyawan',
             'akses' => 'Kelola Hak Akses',
             'log' => 'Log Aktivitas',
             'setting' => 'Pengaturan Web',

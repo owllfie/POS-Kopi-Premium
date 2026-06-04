@@ -9,6 +9,7 @@ use App\Models\Pesanan;
 use App\Models\DetailPesanan;
 use App\Models\Shift;
 use App\Models\ActivityLog;
+use App\Models\Promo;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Midtrans\Config;
@@ -72,7 +73,20 @@ class PembayaranController extends Controller
         $pajak = round(($subtotal * $pajakPersen) / 100);
         $totalBayar = $subtotal + $pajak;
 
-        return view('pembayaran.show', compact('meja', 'pendingItems', 'subtotal', 'pajakPersen', 'pajak', 'totalBayar'));
+        // Fetch active promos
+        $now = now();
+        $activePromos = Promo::where('status', 'Aktif')
+            ->where(function($q) use ($now) {
+                $q->whereNull('start_time')
+                  ->orWhere('start_time', '<=', $now);
+            })
+            ->where(function($q) use ($now) {
+                $q->whereNull('end_time')
+                  ->orWhere('end_time', '>=', $now);
+            })
+            ->get();
+
+        return view('pembayaran.show', compact('meja', 'pendingItems', 'subtotal', 'pajakPersen', 'pajak', 'totalBayar', 'activePromos'));
     }
 
     public function processPayment(Request $request, $meja_id)
@@ -95,12 +109,37 @@ class PembayaranController extends Controller
         $request->validate([
             'metode_pembayaran' => 'required|in:cash,qris',
             'nominal_bayar' => 'required_if:metode_pembayaran,cash|numeric|min:0',
+            'id_promo' => 'nullable|exists:promo,id_promo',
         ]);
 
         $subtotal = $pendingItems->sum('subtotal');
+        
+        // Calculate discount from database
+        $discount = 0;
+        $idPromo = $request->input('id_promo');
+        if ($idPromo) {
+            $promo = Promo::find($idPromo);
+            if ($promo && $promo->status === 'Aktif') {
+                $eligibleSubtotal = $subtotal;
+                if ($promo->menu_ids && count($promo->menu_ids) > 0) {
+                    $eligibleSubtotal = $pendingItems->whereIn('id_menu', $promo->menu_ids)->sum('subtotal');
+                }
+
+                if ($promo->tipe_potongan === 'persen') {
+                    $discount = round(($eligibleSubtotal * $promo->nominal_potongan) / 100);
+                } else {
+                    $discount = $promo->nominal_potongan;
+                }
+                if ($discount > $eligibleSubtotal) {
+                    $discount = $eligibleSubtotal;
+                }
+            }
+        }
+
+        $taxableAmount = $subtotal - $discount;
         $settings = $this->getSettings();
-        $pajakVal = round(($subtotal * $settings['pajak']) / 100);
-        $totalBayar = $subtotal + $pajakVal;
+        $pajakVal = round(($taxableAmount * $settings['pajak']) / 100);
+        $totalBayar = $taxableAmount + $pajakVal;
         
         $metode = $request->input('metode_pembayaran');
 
@@ -129,13 +168,23 @@ class PembayaranController extends Controller
                 ],
                 'item_details' => $pendingItems->map(function($item) {
                     return [
-                        'id' => $item->id_menu,
+                        'id' => 'item-' . $item->id_menu,
                         'price' => (int) $item->harga_satuan,
                         'quantity' => $item->jumlah,
                         'name' => $item->menu->nama_menu,
                     ];
                 })->toArray()
             ];
+
+            // Add promo discount as negative item
+            if ($discount > 0) {
+                $params['item_details'][] = [
+                    'id' => 'DISC-PROMO',
+                    'price' => -(int) $discount,
+                    'quantity' => 1,
+                    'name' => 'Diskon Promo',
+                ];
+            }
 
             // Add tax as item
             $params['item_details'][] = [
@@ -160,13 +209,14 @@ class PembayaranController extends Controller
             }
         }
 
-        return $this->finalizeOrder($request, $meja, $user, $metode, $subtotal, $pajakVal, $totalBayar, $kodeStruk, $pendingItems);
+        return $this->finalizeOrder($request, $meja, $user, $metode, $subtotal, $pajakVal, $totalBayar, $kodeStruk, $pendingItems, $idPromo, $discount);
     }
 
     public function finishPayment(Request $request)
     {
         $order_id = $request->input('order_id');
         $meja_id = $request->input('meja_id');
+        $idPromo = $request->input('id_promo');
         
         $status = Transaction::status($order_id);
         
@@ -192,11 +242,34 @@ class PembayaranController extends Controller
             }
 
             $subtotal = $pendingItems->sum('subtotal');
-            $settings = $this->getSettings();
-            $pajakVal = round(($subtotal * $settings['pajak']) / 100);
-            $totalBayar = $subtotal + $pajakVal;
+            
+            // Calculate discount
+            $discount = 0;
+            if ($idPromo) {
+                $promo = Promo::find($idPromo);
+                if ($promo && $promo->status === 'Aktif') {
+                    $eligibleSubtotal = $subtotal;
+                    if ($promo->menu_ids && count($promo->menu_ids) > 0) {
+                        $eligibleSubtotal = $pendingItems->whereIn('id_menu', $promo->menu_ids)->sum('subtotal');
+                    }
 
-            $this->finalizeOrder($request, $meja, $user, 'qris', $subtotal, $pajakVal, $totalBayar, $kodeStruk, $pendingItems);
+                    if ($promo->tipe_potongan === 'persen') {
+                        $discount = round(($eligibleSubtotal * $promo->nominal_potongan) / 100);
+                    } else {
+                        $discount = $promo->nominal_potongan;
+                    }
+                    if ($discount > $eligibleSubtotal) {
+                        $discount = $eligibleSubtotal;
+                    }
+                }
+            }
+
+            $taxableAmount = $subtotal - $discount;
+            $settings = $this->getSettings();
+            $pajakVal = round(($taxableAmount * $settings['pajak']) / 100);
+            $totalBayar = $taxableAmount + $pajakVal;
+
+            $this->finalizeOrder($request, $meja, $user, 'qris', $subtotal, $pajakVal, $totalBayar, $kodeStruk, $pendingItems, $idPromo, $discount);
             
             $pesanan = Pesanan::where('kode_struk', $kodeStruk)->first();
             return response()->json([
@@ -209,7 +282,7 @@ class PembayaranController extends Controller
         return response()->json(['status' => 'error', 'message' => 'Payment not settled.'], 400);
     }
 
-    private function finalizeOrder($request, $meja, $user, $metode, $subtotal, $pajakVal, $totalBayar, $kodeStruk, $pendingItems)
+    private function finalizeOrder($request, $meja, $user, $metode, $subtotal, $pajakVal, $totalBayar, $kodeStruk, $pendingItems, $idPromo = null, $discount = 0)
     {
         // Check if already finalized
         $existing = Pesanan::where('kode_struk', $kodeStruk)->first();
@@ -223,9 +296,11 @@ class PembayaranController extends Controller
         // Create Pesanan
         $pesanan = Pesanan::create([
             'kode_struk' => $kodeStruk,
+            'id_promo' => $idPromo,
             'id_meja' => $meja->id_meja,
             'metode_pembayaran' => $metode,
             'total_harga' => $subtotal,
+            'diskon' => $discount,
             'pajak' => $pajakVal,
             'total_bayar' => $totalBayar,
             'id_user' => $user->id_user,

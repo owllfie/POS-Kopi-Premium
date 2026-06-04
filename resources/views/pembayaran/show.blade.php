@@ -10,7 +10,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6" x-data="paymentProcessor({{ $totalBayar }}, {{ $meja->id_meja }})">
+<div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6" x-data="paymentProcessor({{ $subtotal }}, {{ $pajakPersen }}, {{ json_encode($activePromos) }}, {{ json_encode($pendingItems) }}, {{ $meja->id_meja }})">
 
     <!-- Order Items Summary Column -->
     <div class="lg:col-span-2 space-y-6">
@@ -44,13 +44,17 @@
                     <span>Subtotal:</span>
                     <span>Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                 </div>
+                <div class="flex justify-between text-rose-600" x-show="discount > 0" x-transition>
+                    <span>Diskon Promo:</span>
+                    <span x-text="'- ' + formatRupiah(discount)"></span>
+                </div>
                 <div class="flex justify-between">
                     <span>Pajak ({{ $pajakPersen }}%):</span>
-                    <span>Rp {{ number_format($pajak, 0, ',', '.') }}</span>
+                    <span x-text="formatRupiah(tax)"></span>
                 </div>
                 <div class="flex justify-between border-t border-coffee-latte pt-2.5 font-bold text-sm text-coffee-dark">
                     <span>Total Bayar:</span>
-                    <span class="text-base text-coffee-light font-black">Rp {{ number_format($totalBayar, 0, ',', '.') }}</span>
+                    <span class="text-base text-coffee-light font-black" x-text="formatRupiah(total)"></span>
                 </div>
             </div>
         </div>
@@ -60,7 +64,31 @@
     <div class="space-y-6">
         <form action="{{ route('pesanan.bayar', $meja->id_meja) }}" method="POST" class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-5" id="payment-form">
             @csrf
-            <h3 class="font-extrabold text-coffee-dark border-b border-coffee-latte pb-3">Metode Pembayaran</h3>
+            <h3 class="font-extrabold text-coffee-dark border-b border-coffee-latte pb-3">Konfirmasi Transaksi</h3>
+            
+            <!-- Promo Selection Dropdown -->
+            <div class="space-y-1.5">
+                <label for="promo_select" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider">Pilih Promo</label>
+                <select 
+                    name="id_promo" 
+                    id="promo_select" 
+                    x-model="selectedPromoId" 
+                    @change="recalculate"
+                    class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
+                >
+                    <option value="">-- Tanpa Promo --</option>
+                    @foreach($activePromos as $promo)
+                        <option value="{{ $promo->id_promo }}">
+                            {{ $promo->nama_promo }} 
+                            ({{ $promo->tipe_potongan === 'persen' ? $promo->nominal_potongan . '%' : 'Rp ' . number_format($promo->nominal_potongan, 0, ',', '.') }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <input type="hidden" name="diskon" :value="discount">
+            
+            <h4 class="font-bold text-coffee-medium text-xs uppercase tracking-wider pt-2 border-t border-coffee-latte/50">Metode Pembayaran</h4>
             
             <!-- Method Selectors -->
             <div class="grid grid-cols-2 gap-3">
@@ -150,16 +178,54 @@
 
 @section('scripts')
 <script>
-    function paymentProcessor(total, mejaId) {
+    function paymentProcessor(subtotal, pajakPersen, promos, items, mejaId) {
         return {
             method: 'cash',
-            total: total,
-            nominal: total,
+            subtotal: subtotal,
+            pajakPersen: pajakPersen,
+            promos: promos,
+            items: items,
+            selectedPromoId: '',
+            discount: 0,
+            tax: 0,
+            total: 0,
+            nominal: 0,
             change: 0,
             mejaId: mejaId,
             loading: false,
             
             init() {
+                this.recalculate();
+                this.nominal = this.total;
+                this.calculateChange();
+            },
+            
+            recalculate() {
+                let promo = this.promos.find(p => p.id_promo == this.selectedPromoId);
+                if (promo) {
+                    let eligibleSubtotal = this.subtotal;
+                    if (promo.menu_ids && promo.menu_ids.length > 0) {
+                        eligibleSubtotal = this.items
+                            .filter(item => promo.menu_ids.includes(String(item.id_menu)) || promo.menu_ids.includes(Number(item.id_menu)))
+                            .reduce((sum, item) => sum + Number(item.subtotal), 0);
+                    }
+
+                    if (promo.tipe_potongan === 'persen') {
+                        this.discount = Math.round((eligibleSubtotal * promo.nominal_potongan) / 100);
+                    } else {
+                        this.discount = promo.nominal_potongan;
+                    }
+                    if (this.discount > eligibleSubtotal) {
+                        this.discount = eligibleSubtotal;
+                    }
+                } else {
+                    this.discount = 0;
+                }
+                
+                let taxableAmount = this.subtotal - this.discount;
+                this.tax = Math.round((taxableAmount * this.pajakPersen) / 100);
+                this.total = taxableAmount + this.tax;
+                
                 this.calculateChange();
             },
             
@@ -201,7 +267,8 @@
                                 "Accept": "application/json"
                             },
                             body: JSON.stringify({
-                                metode_pembayaran: "qris"
+                                metode_pembayaran: "qris",
+                                id_promo: this.selectedPromoId
                             })
                         });
 
@@ -248,18 +315,14 @@
                         },
                         body: JSON.stringify({
                             order_id: orderId,
-                            meja_id: this.mejaId
+                            meja_id: this.mejaId,
+                            id_promo: this.selectedPromoId
                         })
                     });
 
                     const data = await response.json();
                     if (data.status === 'success') {
-                        // We need to pass the receipt ID to the next page so the layout can show the popup
                         const finalUrl = data.redirect;
-                        // To show the receipt popup, we rely on the session flash in Laravel,
-                        // but since we are doing a manual JS redirect, we need the server to handle it.
-                        // The finalizeOrder method already handles the redirect for non-AJAX,
-                        // for AJAX we return the object. Let's make sure the JS redirect works.
                         window.location.href = finalUrl + "?success=Pembayaran berhasil";
                     } else {
                         alert("Gagal memproses pesanan: " + data.message);

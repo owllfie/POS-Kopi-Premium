@@ -93,6 +93,10 @@ class AksesMiddleware
             $module = 'bahan_alat';
         } elseif ($request->is('properti') || $request->is('properti/*')) {
             $module = 'properti';
+        } elseif ($request->is('promo') || $request->is('promo/*')) {
+            $module = 'promo';
+        } elseif ($request->is('jabatan') || $request->is('jabatan/*')) {
+            $module = 'jabatan';
         }
 
         if ($module) {

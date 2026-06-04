@@ -18,6 +18,8 @@ use App\Http\Controllers\AksesController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\PromoController;
+use App\Http\Controllers\JabatanController;
 
 // 1. Public QR Guest Menu (bypasses auth checks but checked inside middleware)
 Route::get('/menu/{qrcode_token}', [GuestMenuController::class, 'show'])->name('guest.menu');
@@ -87,6 +89,15 @@ Route::prefix('meja')->name('meja.')->group(function () {
     Route::post('/force-delete/{id}', [MejaController::class, 'forceDelete'])->name('forceDelete');
 });
 
+Route::prefix('promo')->name('promo.')->group(function () {
+    Route::get('/', [PromoController::class, 'index'])->name('index');
+    Route::post('/store', [PromoController::class, 'store'])->name('store');
+    Route::post('/update/{id}', [PromoController::class, 'update'])->name('update');
+    Route::post('/delete/{id}', [PromoController::class, 'delete'])->name('delete');
+    Route::post('/restore/{id}', [PromoController::class, 'restore'])->name('restore');
+    Route::post('/force-delete/{id}', [PromoController::class, 'forceDelete'])->name('forceDelete');
+});
+
 Route::prefix('users')->name('users.')->group(function () {
     Route::get('/', [UserController::class, 'index'])->name('index');
     Route::post('/store', [UserController::class, 'store'])->name('store');
@@ -103,6 +114,15 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
     Route::post('/delete/{id}', [KaryawanController::class, 'delete'])->name('delete');
     Route::post('/restore/{id}', [KaryawanController::class, 'restore'])->name('restore');
     Route::post('/force-delete/{id}', [KaryawanController::class, 'forceDelete'])->name('forceDelete');
+});
+
+Route::prefix('jabatan')->name('jabatan.')->group(function () {
+    Route::get('/', [JabatanController::class, 'index'])->name('index');
+    Route::post('/store', [JabatanController::class, 'store'])->name('store');
+    Route::post('/update/{id}', [JabatanController::class, 'update'])->name('update');
+    Route::post('/delete/{id}', [JabatanController::class, 'delete'])->name('delete');
+    Route::post('/restore/{id}', [JabatanController::class, 'restore'])->name('restore');
+    Route::post('/force-delete/{id}', [JabatanController::class, 'forceDelete'])->name('forceDelete');
 });
 
 Route::prefix('shift')->name('shift.')->group(function () {

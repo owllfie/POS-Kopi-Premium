@@ -237,7 +237,10 @@
                         <div class="border-b border-dashed border-slate-300 my-2"></div>
                         <div class="space-y-1">
                             <div class="flex justify-between"><span>Subtotal:</span><span>Rp {{ number_format($receipt->total_harga, 0, ',', '.') }}</span></div>
-                            <div class="flex justify-between"><span>Pajak (10%):</span><span>Rp {{ number_format($receipt->pajak, 0, ',', '.') }}</span></div>
+                            @if($receipt->diskon > 0)
+                                <div class="flex justify-between text-slate-600"><span>Diskon:</span><span>- Rp {{ number_format($receipt->diskon, 0, ',', '.') }}</span></div>
+                            @endif
+                            <div class="flex justify-between"><span>Pajak:</span><span>Rp {{ number_format($receipt->pajak, 0, ',', '.') }}</span></div>
                             <div class="flex justify-between font-bold text-sm border-t border-dotted border-slate-300 pt-1.5 mt-1"><span>TOTAL BAYAR:</span><span>Rp {{ number_format($receipt->total_bayar, 0, ',', '.') }}</span></div>
                         </div>
                         <div class="border-b border-dashed border-slate-300 my-2"></div>

@@ -18,9 +18,11 @@ class Pesanan extends Model
 
     protected $fillable = [
         'kode_struk',
+        'id_promo',
         'id_meja',
         'metode_pembayaran',
         'total_harga',
+        'diskon',
         'pajak',
         'total_bayar',
         'id_user',
@@ -34,6 +36,11 @@ class Pesanan extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function promo()
+    {
+        return $this->belongsTo(Promo::class, 'id_promo', 'id_promo');
     }
 
     public function details()

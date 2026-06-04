@@ -23,19 +23,6 @@
 </head>
 <body class="bg-coffee-cream font-sans min-h-screen text-coffee-text" x-data="menuCart()">
 
-    <!-- Role Simulator Quicknav Bar -->
-    <div class="bg-amber-900 text-amber-100 px-4 py-1.5 text-xs font-semibold flex items-center justify-between border-b border-amber-950/20 shadow-sm z-50 sticky top-0">
-        <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Tampilan Pelanggan — <strong>Meja {{ $meja->nomor_meja }}</strong></span>
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="text-amber-300 hidden sm:inline">Uji Flow:</span>
-            <a href="{{ route('simulate.role', 2) }}" class="px-2 py-0.5 rounded bg-amber-800 hover:bg-amber-700 text-amber-200">Kembali ke Admin</a>
-            <a href="{{ route('simulate.role', 5) }}" class="px-2 py-0.5 rounded bg-amber-800 hover:bg-amber-700 text-amber-200">Ke Dapur (Chef)</a>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <div class="max-w-2xl mx-auto px-4 py-6 pb-32 space-y-6">
 
@@ -143,7 +130,13 @@
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @forelse($cat->menus as $item)
-                            @php $isHabis = $item->status === 'habis'; @endphp
+                            @php 
+                                $isHabis = $item->status === 'habis'; 
+                                $foods = $item->getPaketMakananNames();
+                                $drinks = $item->getPaketMinumanNames();
+                                $addons = $item->paket_addons ?? '';
+                                $isPaket = !empty($foods) || !empty($drinks) || !empty($addons);
+                            @endphp
                             <div class="bg-white rounded-2xl border border-coffee-latte p-4 flex gap-4 coffee-card relative {{ $isHabis ? 'opacity-65' : '' }}">
                                 <!-- Menu Photo Icon -->
                                 <div class="w-16 h-16 rounded-xl bg-coffee-latte flex items-center justify-center text-coffee-medium flex-shrink-0 border border-coffee-latte overflow-hidden">
@@ -158,6 +151,15 @@
                                     <div>
                                         <h4 class="text-sm font-bold text-coffee-dark leading-tight">{{ $item->nama_menu }}</h4>
                                         <span class="text-xs font-bold text-coffee-medium block mt-1">Rp {{ number_format($item->harga, 0, ',', '.') }}</span>
+                                        @if($isPaket)
+                                            <button 
+                                                type="button"
+                                                @click="openPackageDetails({{ json_encode($item->nama_menu) }}, {{ json_encode($foods) }}, {{ json_encode($drinks) }}, {{ json_encode($addons) }}, {{ json_encode($item->foto ? (str_starts_with($item->foto, 'http') ? $item->foto : asset($item->foto)) : '') }})"
+                                                class="inline-flex items-center px-2.5 py-1 bg-coffee-gold/10 hover:bg-coffee-gold/20 text-coffee-dark border border-coffee-gold/20 rounded-full text-[9px] font-extrabold uppercase tracking-wider transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] mt-2 cursor-pointer shadow-sm"
+                                            >
+                                                Isi Paket
+                                            </button>
+                                        @endif
                                     </div>
                                     <div class="flex items-center justify-end mt-2">
                                         @if($isHabis)
@@ -296,6 +298,86 @@
                 </div>
             </div>
         </template>
+        
+        <!-- Package Details Modal -->
+        <template x-teleport="body">
+            <div 
+                class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                x-show="packageModal"
+                x-transition
+                style="display: none;"
+            >
+                <div 
+                    @click.away="packageModal = false" 
+                    class="bg-white w-full max-w-sm rounded-3xl border border-coffee-latte/60 p-6 flex flex-col coffee-card text-center space-y-4 shadow-2xl relative overflow-hidden"
+                >
+                    <!-- Decorative background blur -->
+                    <div class="absolute -right-16 -top-16 w-32 h-32 rounded-full bg-coffee-gold/10 blur-xl"></div>
+                    <div class="absolute -left-16 -bottom-16 w-32 h-32 rounded-full bg-coffee-medium/5 blur-xl"></div>
+
+                    <!-- Header -->
+                    <div class="flex items-center justify-between border-b border-coffee-latte/80 pb-3.5 z-10 relative">
+                        <h3 class="font-extrabold text-coffee-dark text-left text-sm">
+                            Detail Isi Paket
+                        </h3>
+                        <button @click="packageModal = false" class="text-coffee-light hover:text-coffee-dark font-extrabold text-xs p-1.5 hover:bg-coffee-cream rounded-lg transition cursor-pointer">Tutup</button>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="text-left space-y-5 py-2 z-10 relative">
+                        <!-- Menu Photo (If exists) -->
+                        <div x-show="packageDetails.foto" class="w-full h-40 rounded-2xl overflow-hidden border border-coffee-latte/50 mb-3 shadow-inner">
+                            <img :src="packageDetails.foto" alt="Foto Paket" class="w-full h-full object-cover">
+                        </div>
+
+                        <h4 class="font-black text-coffee-dark text-base tracking-wide border-l-4 border-coffee-gold pl-2.5" x-text="packageDetails.name"></h4>
+                        
+                        <!-- Makanan List -->
+                        <div x-show="packageDetails.foods && packageDetails.foods.length > 0" class="space-y-2">
+                            <span class="text-[10px] uppercase font-bold text-coffee-medium tracking-widest block">Makanan Included</span>
+                            <div class="grid gap-2">
+                                <template x-for="food in packageDetails.foods">
+                                    <div class="flex items-center gap-2.5 px-3 py-2 bg-coffee-cream/40 border border-coffee-latte/40 rounded-xl">
+                                        <span class="flex-shrink-0 w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px]">🍗</span>
+                                        <span class="text-xs font-bold text-coffee-dark" x-text="food"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Minuman List -->
+                        <div x-show="packageDetails.drinks && packageDetails.drinks.length > 0" class="space-y-2">
+                            <span class="text-[10px] uppercase font-bold text-coffee-medium tracking-widest block">Minuman Included</span>
+                            <div class="grid gap-2">
+                                <template x-for="drink in packageDetails.drinks">
+                                    <div class="flex items-center gap-2.5 px-3 py-2 bg-coffee-cream/40 border border-coffee-latte/40 rounded-xl">
+                                        <span class="flex-shrink-0 w-5 h-5 rounded-md bg-amber-50 text-amber-700 flex items-center justify-center text-[10px]">🥤</span>
+                                        <span class="text-xs font-bold text-coffee-dark" x-text="drink"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Addons -->
+                        <div x-show="packageDetails.addons" class="space-y-2">
+                            <span class="text-[10px] uppercase font-bold text-coffee-medium tracking-widest block">Add-on / Ekstra</span>
+                            <div class="flex items-start gap-2.5 px-3 py-2.5 bg-blue-50/40 border border-blue-100 rounded-xl">
+                                <span class="flex-shrink-0 w-5 h-5 rounded-md bg-blue-50 text-blue-700 flex items-center justify-center text-[10px]">✨</span>
+                                <p class="text-xs font-bold text-coffee-dark leading-normal" x-text="packageDetails.addons"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Action -->
+                    <button 
+                        @click="packageModal = false" 
+                        class="w-full py-3 bg-coffee-dark hover:bg-coffee-medium text-white rounded-2xl font-bold transition text-xs cursor-pointer shadow-md hover:shadow-lg transform active:scale-[0.98] z-10 relative"
+                    >
+                        Mengerti, Tutup
+                    </button>
+                </div>
+            </div>
+        </template>
 
     </div>
 
@@ -305,7 +387,26 @@
             return {
                 activeCategory: 'all',
                 showCartDetails: false,
+                packageModal: false,
+                packageDetails: {
+                    name: '',
+                    foods: [],
+                    drinks: [],
+                    addons: '',
+                    foto: ''
+                },
                 cartItems: {},
+                
+                openPackageDetails(name, foods, drinks, addons, foto) {
+                    this.packageDetails = {
+                        name: name,
+                        foods: foods,
+                        drinks: drinks,
+                        addons: addons,
+                        foto: foto
+                    };
+                    this.packageModal = true;
+                },
                 
                 addToCart(id, name, price) {
                     if (this.cartItems[id]) {

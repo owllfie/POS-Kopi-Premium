@@ -207,6 +207,10 @@
                             <span>Subtotal:</span>
                             <span x-text="formatRupiah(activeTx.total_harga)"></span>
                         </div>
+                        <div class="flex justify-between text-rose-600" x-show="activeTx.diskon > 0">
+                            <span>Diskon Promo:</span>
+                            <span x-text="`- ${formatRupiah(activeTx.diskon)}`"></span>
+                        </div>
                         <div class="flex justify-between">
                             <span>Pajak ({{ $webSettings['pajak'] }}%):</span>
                             <span x-text="formatRupiah(activeTx.pajak)"></span>

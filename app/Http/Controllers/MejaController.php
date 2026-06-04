@@ -21,17 +21,25 @@ class MejaController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
 
         $query = Meja::query();
 
-        if ($viewTrash) {
+        if ($tab === 'trash') {
             $query->onlyTrashed();
         }
 
         $mejas = $query->orderBy('nomor_meja', 'asc')->paginate(15)->withQueryString();
+        
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'meja')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('meja.index', compact('mejas', 'viewTrash'));
+        return view('meja.index', compact('mejas', 'tab', 'historyUpdates'));
     }
 
     public function store(Request $request)
@@ -57,11 +65,12 @@ class MejaController extends Controller
 
         $validated = $request->validate([
             'nomor_meja' => 'required|integer|min:1',
+            'status' => 'required|string|in:kosong,terisi',
         ]);
 
         $meja->update($validated);
 
-        return back()->with('success', 'Nomor meja berhasil diperbarui.');
+        return back()->with('success', 'Detail meja berhasil diperbarui.');
     }
 
     public function regenerateQr(Request $request, $id)

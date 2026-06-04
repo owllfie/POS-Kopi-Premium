@@ -11,7 +11,7 @@
         <!-- Tabs -->
         <div class="flex border-b border-coffee-latte">
             <a href="{{ route('users.index', ['trash' => '0']) }}" class="px-6 py-2.5 font-bold text-xs border-b-2 transition {{ !$viewTrash ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
-                Staff Aktif
+                User Aktif
             </a>
             <a href="{{ route('users.index', ['trash' => '1']) }}" class="px-6 py-2.5 font-bold text-xs border-b-2 transition {{ $viewTrash ? 'border-coffee-dark text-coffee-dark' : 'border-transparent text-coffee-light hover:text-coffee-dark' }}">
                 Tong Sampah (Trash)

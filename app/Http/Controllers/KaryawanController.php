@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Karyawan;
+use App\Models\Jabatan;
 use App\Models\User;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
@@ -20,27 +21,26 @@ class KaryawanController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
 
-        $query = Karyawan::query();
+        $query = Karyawan::with('jabatan');
 
-        if ($viewTrash) {
+        if ($tab === 'trash') {
             $query->onlyTrashed();
         }
 
         $karyawans = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $jabatans = Jabatan::orderBy('nama_jabatan', 'asc')->get();
 
-        $pekerjaanList = [
-            'Kasir',
-            'Leader Kasir',
-            'Manager',
-            'Cleaning Service',
-            'Waiter',
-            'Chef',
-            'Stock Keeper'
-        ];
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'karyawan')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('karyawan.index', compact('karyawans', 'pekerjaanList', 'viewTrash'));
+        return view('karyawan.index', compact('karyawans', 'jabatans', 'tab', 'historyUpdates'));
     }
 
     public function store(Request $request)
@@ -48,9 +48,12 @@ class KaryawanController extends Controller
         $admin = $this->getActiveUser();
         $validated = $request->validate([
             'nama_karyawan' => 'required|string|max:50',
-            'pekerjaan' => 'required|in:Kasir,Leader Kasir,Manager,Cleaning Service,Waiter,Chef,Stock Keeper',
+            'id_jabatan' => 'required|exists:jabatan,id_jabatan',
             'gaji' => 'required|numeric|min:0',
         ]);
+
+        $jabatan = Jabatan::findOrFail($validated['id_jabatan']);
+        $validated['pekerjaan'] = $jabatan->nama_jabatan;
 
         Karyawan::create($validated);
 
@@ -71,9 +74,12 @@ class KaryawanController extends Controller
 
         $validated = $request->validate([
             'nama_karyawan' => 'required|string|max:50',
-            'pekerjaan' => 'required|in:Kasir,Leader Kasir,Manager,Cleaning Service,Waiter,Chef,Stock Keeper',
+            'id_jabatan' => 'required|exists:jabatan,id_jabatan',
             'gaji' => 'required|numeric|min:0',
         ]);
+
+        $jabatan = Jabatan::findOrFail($validated['id_jabatan']);
+        $validated['pekerjaan'] = $jabatan->nama_jabatan;
 
         $karyawan->update($validated);
 
