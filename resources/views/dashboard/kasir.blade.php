@@ -112,7 +112,7 @@
                     @forelse($recentOrders as $tx)
                         <tr>
                             <td class="py-3.5 font-bold text-xs tracking-wide text-coffee-light">{{ $tx->kode_struk }}</td>
-                            <td class="py-3.5">Meja {{ $tx->meja->nomor_meja }}</td>
+                            <td class="py-3.5">{{ $tx->meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $tx->meja->nomor_meja }}</td>
                             <td class="py-3.5 text-xs text-coffee-medium">
                                 @foreach($tx->details as $d)
                                     <div class="truncate max-w-xs">{{ $d->menu->nama_menu }} (x{{ $d->jumlah }})</div>

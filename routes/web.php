@@ -36,6 +36,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard/logs-lazy', [DashboardController::class, 'recentLogsLazy'])->name('dashboard.logs-lazy');
 
 // Shift Cashier start/end trigger actions (Kasir-facing)
 Route::post('/pesanan/start-shift', [DashboardController::class, 'startShift'])->name('shift.start');

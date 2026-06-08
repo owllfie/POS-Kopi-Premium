@@ -213,7 +213,7 @@
                         @forelse($transactions as $tx)
                             <tr>
                                 <td class="py-3.5 font-bold text-xs tracking-wide text-coffee-light">{{ $tx->kode_struk }}</td>
-                                <td class="py-3.5">Meja {{ $tx->meja->nomor_meja }}</td>
+                                <td class="py-3.5">{{ $tx->meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $tx->meja->nomor_meja }}</td>
                                 <td class="py-3.5">{{ $tx->user ? $tx->user->username : 'System' }}</td>
                                 <td class="py-3.5">
                                     <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold {{ $tx->metode_pembayaran === 'cash' ? 'bg-amber-50 border border-amber-100 text-coffee-light' : 'bg-blue-50 border border-blue-100 text-blue-600' }}">

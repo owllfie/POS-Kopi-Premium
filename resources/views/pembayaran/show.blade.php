@@ -74,8 +74,8 @@
                     class="w-full sm:w-64 px-4 py-2 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
                 >
                     @foreach($allTables as $t)
-                        <option value="{{ $t->id_meja }}" {{ $t->id_meja == $meja->id_meja ? 'selected' : '' }} {{ $t->status === 'kosong' ? 'disabled' : '' }}>
-                            Meja {{ $t->nomor_meja }}
+                        <option value="{{ $t->id_meja }}" {{ $t->id_meja == $meja->id_meja ? 'selected' : '' }} {{ ($t->status === 'kosong' && $t->nomor_meja != 99) ? 'disabled' : '' }}>
+                            {{ $t->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $t->nomor_meja }}
                         </option>
                     @endforeach
                 </select>
@@ -113,7 +113,7 @@
 
         <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-4">
             <div class="flex items-center justify-between border-b border-coffee-latte pb-3">
-                <h3 class="font-extrabold text-coffee-dark">Rincian Belanja Meja {{ $meja->nomor_meja }}</h3>
+                <h3 class="font-extrabold text-coffee-dark">Rincian Belanja {{ $meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $meja->nomor_meja }}</h3>
                 <span class="text-xs text-coffee-light font-bold">POS Kopi Premium</span>
             </div>
 
@@ -233,7 +233,7 @@
             <div class="space-y-2 pt-2 border-t border-coffee-latte">
                 <button 
                     type="button"
-                    @click="submitPayment"
+                    @click="confirmPayment"
                     class="w-full py-3.5 bg-coffee-dark text-white rounded-xl font-bold hover:bg-coffee-medium transition shadow-md cursor-pointer flex items-center justify-center space-x-2"
                     :disabled="(method === 'cash' && change < 0) || loading || subtotal === 0"
                     :class="((method === 'cash' && change < 0) || loading || subtotal === 0) ? 'opacity-50 cursor-not-allowed' : ''"
@@ -252,6 +252,77 @@
             </div>
         </form>
     </div>
+
+    <!-- Second Confirmation Modal (Confirm Payment Dialog) -->
+    <template x-teleport="body">
+        <div 
+            x-show="showConfirmModal" 
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            x-transition
+            style="display: none;"
+        >
+            <div 
+                @click.away="showConfirmModal = false" 
+                class="bg-white rounded-3xl border border-coffee-latte shadow-2xl p-6 max-w-sm w-full space-y-6 coffee-card"
+            >
+                <div class="text-center space-y-2">
+                    <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-coffee-medium border border-amber-100 mx-auto">
+                        <svg class="w-6 h-6 text-coffee-light" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-base font-bold text-coffee-dark">Konfirmasi Ulang Pembayaran</h3>
+                    <p class="text-xs text-coffee-light font-medium">Apakah Anda yakin ingin menyelesaikan transaksi ini? Harap periksa kembali detail pembayaran berikut:</p>
+                </div>
+    
+                <div class="bg-coffee-cream/50 rounded-xl p-4 border border-coffee-latte space-y-2 text-xs text-coffee-medium font-semibold">
+                    <div class="flex justify-between">
+                        <span>Tipe Pesanan:</span>
+                        <span class="text-coffee-dark font-bold">
+                            {{ $meja->nomor_meja == 99 ? 'Takeaway' : 'Dine-in (Meja ' . $meja->nomor_meja . ')' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Metode Pembayaran:</span>
+                        <span class="uppercase text-coffee-dark font-bold" x-text="method === 'cash' ? 'Uang Tunai (Cash)' : 'QRIS / Midtrans'"></span>
+                    </div>
+                    <div class="flex justify-between border-t border-coffee-latte/50 pt-2 font-bold text-sm text-coffee-dark">
+                        <span>Total Tagihan:</span>
+                        <span class="text-coffee-light font-black" x-text="formatRupiah(total)"></span>
+                    </div>
+                    <template x-if="method === 'cash'">
+                        <div class="space-y-2 pt-2 border-t border-dashed border-coffee-latte/50">
+                            <div class="flex justify-between">
+                                <span>Uang Diterima:</span>
+                                <span class="text-coffee-dark" x-text="formatRupiah(nominal)"></span>
+                            </div>
+                            <div class="flex justify-between font-bold text-emerald-800">
+                                <span>Uang Kembalian:</span>
+                                <span x-text="formatRupiah(change)"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+    
+                <div class="flex gap-3 pt-2">
+                    <button 
+                        type="button" 
+                        @click="showConfirmModal = false" 
+                        class="w-1/2 py-3 border border-coffee-light text-coffee-dark rounded-xl font-semibold hover:bg-coffee-latte transition text-xs"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        type="button" 
+                        @click="executePayment" 
+                        class="w-1/2 py-3 bg-coffee-dark text-white rounded-xl font-semibold hover:bg-coffee-medium transition text-xs flex items-center justify-center space-x-1"
+                    >
+                        <span>Ya, Konfirmasi</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 @endsection
 
@@ -272,6 +343,7 @@
             change: 0,
             mejaId: mejaId,
             loading: false,
+            showConfirmModal: false,
             
             init() {
                 this.recalculate();
@@ -328,9 +400,17 @@
                 return 'Rp ' + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             },
 
-            async submitPayment() {
+            confirmPayment() {
+                if (this.method === 'cash' && this.change < 0) return;
+                if (this.subtotal === 0) return;
+                this.showConfirmModal = true;
+            },
+
+            async executePayment() {
+                this.showConfirmModal = false;
                 if (this.method === 'cash') {
                     if (this.change < 0) return;
+                    this.loading = true;
                     document.getElementById('payment-form').submit();
                     return;
                 }
@@ -430,6 +510,8 @@
         }
     });
 </script>
+
+
 
         <!-- Close Shift Modal (End Shift Dialog) -->
         @if($isKasir && $activeShift)

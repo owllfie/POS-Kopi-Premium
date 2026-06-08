@@ -56,3 +56,83 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px -2px rgba(74, 53, 49, 0.08);
 }
+
+/* --- Lazy Loading Styles & Skeleton Loaders --- */
+
+/* Shimmer animation for skeletons */
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-loader {
+    background: linear-gradient(
+        90deg,
+        var(--color-coffee-latte) 25%,
+        rgba(141, 110, 99, 0.12) 37%,
+        var(--color-coffee-latte) 63%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Aspect ratio utilities for CLS prevention */
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+.aspect-video {
+    aspect-ratio: 16 / 9;
+}
+
+.aspect-portrait {
+    aspect-ratio: 3 / 4;
+}
+
+/* Fade-in transitions for loaded elements */
+.lazy-fade {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+}
+
+.lazy-fade.lazy-loaded {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Blur-up transition */
+.lazy-blur {
+    filter: blur(8px);
+    transition: filter 0.4s ease;
+    will-change: filter;
+}
+
+.lazy-blur.lazy-loaded {
+    filter: blur(0);
+}
+
+/* Base styles for lazy placeholders */
+.lazy-placeholder {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-coffee-latte);
+}
+
+.lazy-placeholder::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 25%, rgba(141, 110, 99, 0.08) 37%, transparent 63%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+}

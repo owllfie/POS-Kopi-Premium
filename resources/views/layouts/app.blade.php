@@ -34,6 +34,7 @@
             ['module' => 'users', 'route' => 'users.index', 'label' => 'Kelola Users', 'icon' => 'users'],
             ['module' => 'menu', 'route' => 'menu.index', 'label' => 'Kelola Menu', 'icon' => 'coffee'],
             ['module' => 'kategori', 'route' => 'kategori.index', 'label' => 'Kelola Kategori', 'icon' => 'tag'],
+            ['module' => 'promo', 'route' => 'promo.index', 'label' => 'Kelola Promo', 'icon' => 'gift'],
             ['module' => 'meja', 'route' => 'meja.index', 'label' => 'Kelola Meja & QR', 'icon' => 'table'],
             ['module' => 'bahan_alat', 'route' => 'bahan-alat.index', 'label' => 'Bahan', 'icon' => 'archive'],
             ['module' => 'properti', 'route' => 'properti.index', 'label' => 'Properti Cafe', 'icon' => 'office-building'],
@@ -96,6 +97,8 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                                 @elseif($item['icon'] === 'tag')
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                @elseif($item['icon'] === 'gift')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0h4a2 2 0 012 2v2H6v-2a2 2 0 012-2h4zm-8 4v8a2 2 0 002 2h12a2 2 0 002-2v-8H4z"/></svg>
                                 @elseif($item['icon'] === 'table')
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 @elseif($item['icon'] === 'clock')
@@ -234,7 +237,7 @@
                             <div class="border-b border-dashed border-slate-300 my-2"></div>
                         </div>
                         <div class="space-y-1 text-[10px]">
-                            <div class="flex justify-between"><span>No: {{ $receipt->kode_struk }}</span><span>Meja: {{ $receipt->meja->nomor_meja }}</span></div>
+                            <div class="flex justify-between"><span>No: {{ $receipt->kode_struk }}</span><span>Meja: {{ $receipt->meja->nomor_meja == 99 ? 'Takeaway' : $receipt->meja->nomor_meja }}</span></div>
                             <div class="flex justify-between"><span>Kasir: {{ $receipt->user ? $receipt->user->username : 'System' }}</span><span>Tgl: {{ $receipt->created_at->format('d/m/y H:i') }}</span></div>
                         </div>
                         <div class="border-b border-dashed border-slate-300 my-2"></div>

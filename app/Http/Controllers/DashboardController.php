@@ -277,4 +277,23 @@ class DashboardController extends Controller
 
         return redirect()->route('pesanan')->with('success', 'Shift ditutup. Selisih kas: Rp ' . number_format($selisih, 0, ',', '.'));
     }
+
+    public function recentLogsLazy(Request $request)
+    {
+        $user = $this->getActiveUser();
+        if (!$user) {
+            return response('Unauthenticated', 401);
+        }
+
+        // Add 600ms delay so the beautiful skeleton shimmer loader is visible during demonstration
+        usleep(600000);
+
+        $logs = ActivityLog::with('user')
+            ->orderBy('created_at', 'desc')
+            ->take(8)
+            ->get();
+
+        return view('dashboard.partials.logs', compact('logs'));
+    }
 }
+

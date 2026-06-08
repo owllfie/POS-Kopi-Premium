@@ -171,7 +171,7 @@
                     @forelse($recentTransactions as $tx)
                         <tr>
                             <td class="py-3.5 font-bold text-xs tracking-wide text-coffee-light">{{ $tx->kode_struk }}</td>
-                            <td class="py-3.5">Meja {{ $tx->meja->nomor_meja }}</td>
+                            <td class="py-3.5">{{ $tx->meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $tx->meja->nomor_meja }}</td>
                             <td class="py-3.5">{{ $tx->user ? $tx->user->username : 'System' }}</td>
                             <td class="py-3.5">
                                 <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold {{ $tx->metode_pembayaran === 'cash' ? 'bg-amber-50 border border-amber-100 text-coffee-light' : 'bg-blue-50 border border-blue-100 text-blue-600' }}">
@@ -191,5 +191,23 @@
         </div>
     </div>
 
+    <!-- Lazy Loaded Audit Logs Row (Demonstrates Database Fetch Lazy Loading) -->
+    <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-4">
+        <div class="flex items-center justify-between">
+            <h4 class="font-bold text-coffee-dark">Log Aktivitas Terbaru</h4>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100/50 text-coffee-light border border-amber-200/50 uppercase tracking-wider">Dynamic DB Fetch</span>
+        </div>
+        
+        <!-- Lazy Load Target Element -->
+        <div 
+            class="lazy-fade min-h-[150px]"
+            data-lazy-url="{{ route('dashboard.logs-lazy') }}"
+            data-skeleton-type="table"
+        >
+            <!-- Content will be auto-injected here by LazyLoadManager when in viewport -->
+        </div>
+    </div>
+
 </div>
 @endsection
+

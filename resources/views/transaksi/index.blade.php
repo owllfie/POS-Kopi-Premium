@@ -98,7 +98,7 @@
                         <!-- Row Click details viewer -->
                         <tr class="hover:bg-coffee-latte/20 transition">
                             <td class="py-3.5 font-bold text-xs tracking-wide text-coffee-light">{{ $tx->kode_struk }}</td>
-                            <td class="py-3.5">Meja {{ $tx->meja->nomor_meja }}</td>
+                            <td class="py-3.5">{{ $tx->meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $tx->meja->nomor_meja }}</td>
                             <td class="py-3.5">{{ $tx->user ? $tx->user->username : 'System' }}</td>
                             <td class="py-3.5">
                                 <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold {{ $tx->metode_pembayaran === 'cash' ? 'bg-amber-50 border border-amber-100 text-coffee-light' : 'bg-blue-50 border border-blue-100 text-blue-600' }}">
@@ -179,7 +179,7 @@
                 <div class="space-y-4 font-mono text-xs text-coffee-text bg-coffee-cream/50 p-4 rounded-xl border border-coffee-latte">
                     <div class="text-center space-y-0.5">
                         <strong class="text-sm font-bold uppercase tracking-wider block">Kopi Premium</strong>
-                        <span class="text-[10px] text-coffee-light block" x-text="`Meja: ${activeTx.meja ? activeTx.meja.nomor_meja : '?'}`"></span>
+                        <span class="text-[10px] text-coffee-light block" x-text="activeTx.meja && activeTx.meja.nomor_meja == 99 ? 'Tipe: Takeaway' : 'Meja: ' + (activeTx.meja ? activeTx.meja.nomor_meja : '?')"></span>
                         <span class="text-[10px] text-coffee-light block" x-text="`Tgl: ${formatDate(activeTx.created_at)}`"></span>
                     </div>
                     <div class="border-b border-dashed border-coffee-latte my-2"></div>
