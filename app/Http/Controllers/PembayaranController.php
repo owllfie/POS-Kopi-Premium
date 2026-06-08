@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Meja;
+use App\Models\Menu;
 use App\Models\Pesanan;
 use App\Models\DetailPesanan;
 use App\Models\Shift;
@@ -53,7 +54,20 @@ class PembayaranController extends Controller
     {
         $meja = Meja::find($meja_id);
         if (!$meja) {
-            return redirect()->route('pesanan')->with('error', 'Meja tidak ditemukan.');
+            $firstTable = Meja::orderBy('nomor_meja', 'asc')->first();
+            if ($firstTable) {
+                return redirect()->route('pesanan.bayar', $firstTable->id_meja);
+            }
+            return redirect()->route('dashboard')->with('error', 'Meja tidak ditemukan.');
+        }
+
+        $user = $this->getActiveUser();
+        $activeShift = null;
+        if ($user && $user->role->role === 'kasir') {
+            $activeShift = Shift::with('user')
+                ->where('id_user', $user->id_user)
+                ->whereNull('jam_selesai')
+                ->first();
         }
 
         // Get all pending detail items for this table
@@ -61,10 +75,6 @@ class PembayaranController extends Controller
             ->whereNull('id_pesanan')
             ->with('menu')
             ->get();
-
-        if ($pendingItems->isEmpty()) {
-            return redirect()->route('pesanan')->with('error', 'Tidak ada pesanan aktif untuk Meja ' . $meja->nomor_meja);
-        }
 
         $subtotal = $pendingItems->sum('subtotal');
         
@@ -86,7 +96,63 @@ class PembayaranController extends Controller
             })
             ->get();
 
-        return view('pembayaran.show', compact('meja', 'pendingItems', 'subtotal', 'pajakPersen', 'pajak', 'totalBayar', 'activePromos'));
+        $allTables = Meja::orderBy('nomor_meja', 'asc')->get();
+
+        return view('pembayaran.show', compact('meja', 'pendingItems', 'subtotal', 'pajakPersen', 'pajak', 'totalBayar', 'activePromos', 'allTables', 'activeShift'));
+    }
+
+    public function scanBarcode(Request $request, $meja_id)
+    {
+        $request->validate([
+            'barcode' => 'required|string',
+        ]);
+
+        $meja = Meja::find($meja_id);
+        if (!$meja) {
+            return back()->with('error', 'Meja tidak ditemukan.');
+        }
+
+        // Find the menu item by barcode (kode_menu)
+        $menu = Menu::where('kode_menu', $request->barcode)->first();
+
+        if (!$menu) {
+            return back()->with('error', 'Menu dengan barcode "' . $request->barcode . '" tidak ditemukan.');
+        }
+
+        if ($menu->status === 'habis') {
+            return back()->with('error', 'Menu "' . $menu->nama_menu . '" sedang habis.');
+        }
+
+        // Look for existing pending item for this table and menu
+        $existingItem = DetailPesanan::where('id_meja_temp', $meja->id_meja)
+            ->where('id_menu', $menu->id_menu)
+            ->whereNull('id_pesanan')
+            ->first();
+
+        if ($existingItem) {
+            $existingItem->jumlah += 1;
+            $existingItem->subtotal = $existingItem->jumlah * $existingItem->harga_satuan;
+            $existingItem->save();
+        } else {
+            DetailPesanan::create([
+                'id_pesanan' => null,
+                'id_menu' => $menu->id_menu,
+                'jumlah' => 1,
+                'harga_satuan' => $menu->harga,
+                'subtotal' => $menu->harga,
+                'catatan' => null,
+                'status' => 'menunggu',
+                'id_meja_temp' => $meja->id_meja,
+            ]);
+        }
+
+        // Mark table as occupied
+        if ($meja->status !== 'terisi') {
+            $meja->status = 'terisi';
+            $meja->save();
+        }
+
+        return back()->with('success', 'Menu "' . $menu->nama_menu . '" berhasil ditambahkan.');
     }
 
     public function processPayment(Request $request, $meja_id)

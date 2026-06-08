@@ -28,6 +28,12 @@ class PesananController extends Controller
 
         $role = $user->role->role;
 
+        if ($role === 'kasir') {
+            $firstTable = Meja::orderBy('nomor_meja', 'asc')->first();
+            $mejaId = $firstTable ? $firstTable->id_meja : 1;
+            return redirect()->route('pesanan.bayar', $mejaId);
+        }
+
         if ($role === 'chef') {
             // Chef view: only pending/cooking detail lines, grouped by table
             $kitchenItems = DetailPesanan::whereNull('id_pesanan')
@@ -40,49 +46,8 @@ class PesananController extends Controller
             return view('pesanan.chef', compact('kitchenItems'));
         }
 
-        // Cashier/Admin view: active orders grouped by table
-        $statusFilter = $request->input('status', 'semua');
-        
-        $query = DetailPesanan::whereNull('id_pesanan')
-            ->whereNotNull('id_meja_temp')
-            ->with(['menu', 'mejaTemp']);
-
-        if ($statusFilter !== 'semua') {
-            $query->where('status', $statusFilter);
-        }
-
-        $items = $query->orderBy('created_at', 'asc')->get();
-        
-        // Group by table to present active orders
-        $activeOrders = [];
-        $grouped = $items->groupBy('id_meja_temp');
-        
-        foreach ($grouped as $mejaId => $details) {
-            $meja = Meja::find($mejaId);
-            if (!$meja) continue;
-
-            $total = $details->sum('subtotal');
-            $earliestTime = $details->min('created_at');
-            
-            // Determine order-level status: if any is 'menunggu' -> 'menunggu', if all are 'selesai' -> 'selesai', else 'dimasak'
-            $statuses = $details->pluck('status')->unique()->toArray();
-            $orderStatus = 'dimasak';
-            if (count($statuses) === 1 && $statuses[0] === 'selesai') {
-                $orderStatus = 'selesai';
-            } elseif (in_array('menunggu', $statuses) && !in_array('dimasak', $statuses)) {
-                $orderStatus = 'menunggu';
-            }
-
-            $activeOrders[] = [
-                'meja' => $meja,
-                'details' => $details,
-                'total' => $total,
-                'created_at' => $earliestTime,
-                'status' => $orderStatus,
-            ];
-        }
-
-        return view('pesanan.cashier', compact('activeOrders', 'statusFilter'));
+        // For other roles, since Antrean Pesanan is removed, redirect to dashboard
+        return redirect()->route('dashboard');
     }
 
     // Chef updates item status (menunggu -> dimasak -> selesai)

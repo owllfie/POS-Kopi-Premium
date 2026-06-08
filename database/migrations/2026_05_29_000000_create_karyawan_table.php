@@ -12,8 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('karyawan')) {
-            Schema::create('karyawan', function (Blueprint $table) {
+                if (!Schema::hasTable('karyawan')) {
+            $isSqlite = Schema::getConnection()->getDriverName() === 'sqlite';
+            Schema::create('karyawan', function (Blueprint $table) use ($isSqlite) {
                 $table->integer('id_karyawan')->autoIncrement();
                 $table->string('nama_karyawan', 50);
                 $table->enum('pekerjaan', [
@@ -29,7 +30,7 @@ return new class extends Migration
                 $table->timestamps();
                 $table->softDeletes();
 
-                $table->primary('id_karyawan');
+                if (!$isSqlite) $table->primary('id_karyawan');
             });
         }
 

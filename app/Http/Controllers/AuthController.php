@@ -13,10 +13,18 @@ class AuthController extends Controller
     {
         // Redirect if already authenticated (or simulated)
         if (session()->has('simulated_user_id')) {
+            $user = User::find(session('simulated_user_id'));
+            if ($user && ($user->role->role === 'kasir' || $user->role->role === 'chef')) {
+                return redirect()->route('pesanan');
+            }
             return redirect()->route('dashboard');
         }
         if (Auth::check()) {
-            session(['simulated_user_id' => Auth::user()->id_user]);
+            $user = Auth::user();
+            session(['simulated_user_id' => $user->id_user]);
+            if ($user->role->role === 'kasir' || $user->role->role === 'chef') {
+                return redirect()->route('pesanan');
+            }
             return redirect()->route('dashboard');
         }
         return view('auth.login');
@@ -43,6 +51,10 @@ class AuthController extends Controller
                 'detail_aktivitas' => 'User logged in successfully via credentials.',
                 'ip_address' => $request->ip(),
             ]);
+
+            if ($user->role->role === 'kasir' || $user->role->role === 'chef') {
+                return redirect()->route('pesanan')->with('success', 'Selamat datang kembali, ' . $user->username . '!');
+            }
 
             return redirect()->route('dashboard')->with('success', 'Selamat datang kembali, ' . $user->username . '!');
         }
@@ -86,9 +98,9 @@ class AuthController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
-            // Chef goes directly to Daftar Pesanan per workflow.md, others go to Dashboard
-            if ($user->role->role === 'chef') {
-                return redirect()->route('pesanan')->with('success', 'Simulasi: Masuk sebagai CHEF');
+            // Kasir/Chef goes directly to Daftar Pesanan per workflow.md, others go to Dashboard
+            if ($user->role->role === 'chef' || $user->role->role === 'kasir') {
+                return redirect()->route('pesanan')->with('success', 'Simulasi: Masuk sebagai ' . strtoupper($user->role->role));
             }
             
             return redirect()->route('dashboard')->with('success', 'Simulasi: Masuk sebagai ' . strtoupper($user->role->role));

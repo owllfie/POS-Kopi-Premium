@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'POS Restoran') - Coffee Shop</title>
+    <title>@yield('title', 'POS Restoran') - Kopi Premium</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Assets -->
@@ -14,9 +14,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     @yield('styles')
-</head>
-<body class="bg-coffee-cream font-sans min-h-screen text-coffee-text antialiased" x-data="{ sidebarOpen: true }">
-
     @php
         // Resolve the active simulated user
         $simUser = null;
@@ -32,7 +29,6 @@
         // Modules lists to render in sidebar
         $sidebarItems = [
             ['module' => 'dashboard', 'route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'chart-bar'],
-            ['module' => 'pesanan', 'route' => 'pesanan', 'label' => 'Antrean Pesanan', 'icon' => 'clipboard-list'],
             ['module' => 'laporan', 'route' => 'laporan', 'label' => 'Laporan Keuangan', 'icon' => 'document-report'],
             ['module' => 'transaksi', 'route' => 'transaksi', 'label' => 'Riwayat Transaksi', 'icon' => 'history'],
             ['module' => 'users', 'route' => 'users.index', 'label' => 'Kelola Users', 'icon' => 'users'],
@@ -41,17 +37,19 @@
             ['module' => 'meja', 'route' => 'meja.index', 'label' => 'Kelola Meja & QR', 'icon' => 'table'],
             ['module' => 'bahan_alat', 'route' => 'bahan-alat.index', 'label' => 'Bahan', 'icon' => 'archive'],
             ['module' => 'properti', 'route' => 'properti.index', 'label' => 'Properti Cafe', 'icon' => 'office-building'],
-            ['module' => 'shift', 'route' => 'shift.index', 'label' => 'Kelola Shift', 'icon' => 'clock'],
             ['module' => 'akses', 'route' => 'akses.index', 'label' => 'Hak Akses', 'icon' => 'shield'],
             ['module' => 'log', 'route' => 'log', 'label' => 'Log Aktivitas', 'icon' => 'database-log'],
             ['module' => 'setting', 'route' => 'setting.index', 'label' => 'Pengaturan Web', 'icon' => 'cog'],
             ['module' => 'backup', 'route' => 'backup.index', 'label' => 'Backup Database', 'icon' => 'cloud-download'],
         ];
     @endphp
+</head>
+<body class="bg-coffee-cream font-sans min-h-screen text-coffee-text antialiased" x-data="{ sidebarOpen: {{ in_array($roleName, ['kasir', 'chef']) ? 'false' : 'true' }} }">
 
     <!-- Main Wrapper -->
     <div class="flex min-h-[calc(100vh-28px)] relative overflow-hidden">
         
+        @if(!in_array($roleName, ['kasir', 'chef']))
         <!-- Sidebar -->
         <aside 
             class="bg-coffee-dark text-coffee-latte w-64 flex-shrink-0 flex flex-col border-r border-coffee-medium transition-all duration-300 z-30"
@@ -121,35 +119,46 @@
                     @endif
                 @endforeach
             </nav>
-
-            <!-- Sidebar Footer -->
-            <div class="p-4 border-t border-coffee-medium bg-coffee-dark/60 flex items-center justify-between">
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="w-9 h-9 rounded-full bg-coffee-gold text-coffee-dark font-bold flex items-center justify-center flex-shrink-0 text-sm">
-                        {{ strtoupper(substr($simUser ? $simUser->username : 'G', 0, 2)) }}
-                    </div>
-                    <div class="overflow-hidden">
-                        <p class="text-sm font-semibold text-white truncate leading-tight">{{ $simUser ? $simUser->username : 'Guest' }}</p>
-                        <p class="text-xs text-coffee-light font-medium truncate uppercase tracking-wider">{{ $roleName }}</p>
-                    </div>
-                </div>
-                <a href="{{ route('logout') }}" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-950/40 hover:text-red-400 text-coffee-light transition duration-150" title="Keluar">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </a>
-            </div>
         </aside>
+        @endif
 
         <!-- Content Area -->
         <div class="flex-1 flex flex-col min-w-0">
             <header class="h-16 bg-white border-b border-coffee-latte flex items-center justify-between px-6 z-20">
                 <div class="flex items-center gap-4">
+                    @if(!in_array($roleName, ['kasir', 'chef']))
                     <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-coffee-latte text-coffee-medium transition focus:outline-none">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
+                    @endif
                     <h1 class="text-xl font-bold text-coffee-dark">@yield('page_title', 'Halaman Utama')</h1>
                 </div>
-                <div class="flex items-center gap-4 text-sm text-coffee-medium">
-                    <div id="live-clock" class="font-medium text-xs tracking-wide"></div>
+                <div class="flex items-center gap-6">
+                    <div id="live-clock" class="font-medium text-xs tracking-wide text-coffee-medium hidden md:block"></div>
+                    
+                    <!-- Vertical Divider (only visible when clock is visible) -->
+                    <div class="h-8 w-px bg-coffee-latte hidden md:block"></div>
+
+                    <!-- User Profile & Logout -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-coffee-gold text-coffee-dark font-bold flex items-center justify-center flex-shrink-0 text-sm shadow-sm border border-coffee-gold/20">
+                                {{ strtoupper(substr($simUser ? $simUser->username : 'G', 0, 2)) }}
+                            </div>
+                            <div class="hidden sm:block text-left">
+                                <p class="text-sm font-semibold text-coffee-dark leading-tight">{{ $simUser ? $simUser->username : 'Guest' }}</p>
+                                <p class="text-[10px] text-coffee-medium font-semibold uppercase tracking-wider">{{ $roleName }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Divider inside profile info -->
+                        <div class="h-6 w-px bg-coffee-latte"></div>
+
+                        <!-- Logout Button -->
+                        <a href="{{ route('logout') }}" class="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 text-coffee-medium hover:border-rose-100 transition duration-150 border border-transparent" title="Keluar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </a>
+                    </div>
                 </div>
             </header>
 

@@ -6,9 +6,13 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\BahanAlat;
 use App\Models\Aksess;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class FinanceInventoryTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected $seed = true;
     /**
      * Test access permissions for the bahan-alat and properti routes.
      */

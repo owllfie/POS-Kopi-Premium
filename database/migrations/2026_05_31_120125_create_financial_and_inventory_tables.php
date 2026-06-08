@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $isSqlite = Schema::getConnection()->getDriverName() === 'sqlite';
+
         // 1. keuangan_transaksi (Financial Ledger Transactions)
-        Schema::create('keuangan_transaksi', function (Blueprint $table) {
+        Schema::create('keuangan_transaksi', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_transaksi')->autoIncrement();
             $table->date('tanggal');
             $table->integer('kode_akun'); // e.g. 4100, 5100, 6100
@@ -24,12 +26,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_transaksi');
+            if (!$isSqlite) $table->primary('id_transaksi');
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('set null');
         });
 
         // 2. bahan_alat (Materials & Tools Inventory)
-        Schema::create('bahan_alat', function (Blueprint $table) {
+        Schema::create('bahan_alat', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_item')->autoIncrement();
             $table->string('nama_item', 255);
             $table->enum('tipe', ['bahan', 'alat']); // Bahan Baku vs Peralatan
@@ -41,7 +43,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_item');
+            if (!$isSqlite) $table->primary('id_item');
         });
     }
 

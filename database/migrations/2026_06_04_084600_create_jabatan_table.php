@@ -10,8 +10,9 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Create jabatan table
-        if (!Schema::hasTable('jabatan')) {
-            Schema::create('jabatan', function (Blueprint $table) {
+                if (!Schema::hasTable('jabatan')) {
+            $isSqlite = Schema::getConnection()->getDriverName() === 'sqlite';
+            Schema::create('jabatan', function (Blueprint $table) use ($isSqlite) {
                 $table->integer('id_jabatan')->autoIncrement();
                 $table->string('nama_jabatan', 50)->unique();
                 $table->integer('gaji_standar')->default(0);
@@ -19,7 +20,7 @@ return new class extends Migration
                 $table->timestamps();
                 $table->softDeletes();
 
-                $table->primary('id_jabatan');
+                if (!$isSqlite) $table->primary('id_jabatan');
             });
         }
 

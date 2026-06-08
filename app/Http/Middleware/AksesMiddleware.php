@@ -60,6 +60,9 @@ class AksesMiddleware
         // 4. Map request path to module
         $module = null;
         if ($request->is('dashboard') || $request->is('/')) {
+            if ($user->role->role === 'kasir' || $user->role->role === 'chef') {
+                return redirect()->route('pesanan');
+            }
             $module = 'dashboard';
         } elseif ($request->is('pesanan/*/bayar') || $request->is('pesanan/bayar/*')) {
             $module = 'bayar';

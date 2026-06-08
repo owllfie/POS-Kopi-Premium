@@ -23,6 +23,8 @@ class Menu extends Model
         'paket_makanan',
         'paket_minuman',
         'paket_addons',
+        'kode_menu',
+        'deskripsi',
     ];
 
     protected $casts = [

@@ -87,7 +87,8 @@ class DatabaseSeeder extends Seeder
         $modules = [
             'dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 
             'users', 'menu', 'kategori', 'meja', 'shift', 'akses', 
-            'log', 'setting', 'backup', 'bahan_alat', 'properti', 'karyawan'
+            'log', 'setting', 'backup', 'bahan_alat', 'properti', 'karyawan',
+            'promo', 'jabatan'
         ];
  
         // Seeding rules for each role
@@ -111,7 +112,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Cashier gets operations
-        $kasirAllowed = ['dashboard', 'pesanan', 'bayar'];
+        $kasirAllowed = ['pesanan', 'bayar'];
         foreach ($modules as $mod) {
             $allowed = in_array($mod, $kasirAllowed) ? '1' : '0';
             Aksess::create(['id_role' => 4, 'modul' => $mod, 'allowed' => $allowed]);
@@ -125,11 +126,13 @@ class DatabaseSeeder extends Seeder
         }
 
         // 4. Categories
+        \Illuminate\Support\Facades\DB::table('kategori')->delete();
         $categories = [
             ['id_kategori' => 1, 'kategori' => 'Coffee'],
             ['id_kategori' => 2, 'kategori' => 'Non-Coffee'],
             ['id_kategori' => 3, 'kategori' => 'Pastry'],
             ['id_kategori' => 4, 'kategori' => 'Dessert'],
+            ['id_kategori' => 5, 'kategori' => 'Paket'],
         ];
         foreach ($categories as $cat) {
             Kategori::create($cat);

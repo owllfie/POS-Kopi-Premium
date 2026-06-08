@@ -258,6 +258,16 @@
                         </div>
                     </div>
     
+                    <div>
+                        <label for="kode_menu" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Kode Barcode (Opsional)</label>
+                        <input type="text" name="kode_menu" id="kode_menu" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white" placeholder="Scan atau ketik kode barcode...">
+                    </div>
+    
+                    <div>
+                        <label for="deskripsi" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Deskripsi (Opsional)</label>
+                        <textarea name="deskripsi" id="deskripsi" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white" placeholder="Ketik deskripsi menu hidangan..."></textarea>
+                    </div>
+    
                     @if($tab === 'paket')
                         <!-- Makanan Search and Suggestion Select -->
                         <div class="space-y-2 relative" x-data="{ open: false }" @click.outside="open = false">
@@ -400,6 +410,16 @@
                             <input type="text" x-model="editHargaFormatted" @input="editHargaRaw = editHargaFormatted.replace(/[^0-9]/g, ''); editHargaFormatted = formatRupiahHelper(editHargaRaw)" required class="w-full px-4 py-2.5 text-xs font-bold text-coffee-dark focus:outline-none bg-white">
                             <input type="hidden" name="harga" :value="editHargaRaw">
                         </div>
+                    </div>
+    
+                    <div>
+                        <label for="edit_kode_menu" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Kode Barcode (Opsional)</label>
+                        <input type="text" name="kode_menu" id="edit_kode_menu" x-model="editMenu.kode_menu" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white" placeholder="Scan atau ketik kode barcode...">
+                    </div>
+    
+                    <div>
+                        <label for="edit_deskripsi" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Deskripsi (Opsional)</label>
+                        <textarea name="deskripsi" id="edit_deskripsi" x-model="editMenu.deskripsi" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white" placeholder="Ketik deskripsi menu hidangan..."></textarea>
                     </div>
     
                     @if($tab === 'paket')

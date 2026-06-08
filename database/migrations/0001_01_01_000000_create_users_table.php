@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $isSqlite = Schema::getConnection()->getDriverName() === 'sqlite';
+
         // 1. role
-        Schema::create('role', function (Blueprint $table) {
+        Schema::create('role', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_role')->autoIncrement();
             $table->string('role', 50);
-            $table->primary('id_role');
+            if (!$isSqlite) $table->primary('id_role');
         });
 
         // 2. users
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_user')->autoIncrement();
             $table->string('username', 255);
             $table->string('email', 255)->unique();
@@ -28,12 +30,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             
-            $table->primary('id_user');
+            if (!$isSqlite) $table->primary('id_user');
             $table->foreign('id_role')->references('id_role')->on('role')->onDelete('cascade');
         });
 
         // 3. aksess
-        Schema::create('aksess', function (Blueprint $table) {
+        Schema::create('aksess', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_akses')->autoIncrement();
             $table->integer('id_role');
             $table->string('modul', 255);
@@ -41,12 +43,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_akses');
+            if (!$isSqlite) $table->primary('id_akses');
             $table->foreign('id_role')->references('id_role')->on('role')->onDelete('cascade');
         });
 
         // 4. shift
-        Schema::create('shift', function (Blueprint $table) {
+        Schema::create('shift', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_shift')->autoIncrement();
             $table->integer('id_user');
             $table->timestamp('jam_mulai')->useCurrent();
@@ -57,22 +59,22 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_shift');
+            if (!$isSqlite) $table->primary('id_shift');
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
         });
 
         // 5. kategori
-        Schema::create('kategori', function (Blueprint $table) {
+        Schema::create('kategori', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_kategori')->autoIncrement();
             $table->string('kategori', 50);
             $table->timestamps();
             $table->softDeletes(); // Consider adding for consistency as suggested in database_detail.md
 
-            $table->primary('id_kategori');
+            if (!$isSqlite) $table->primary('id_kategori');
         });
 
         // 6. menu
-        Schema::create('menu', function (Blueprint $table) {
+        Schema::create('menu', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_menu')->autoIncrement();
             $table->string('nama_menu', 255);
             $table->integer('id_kategori');
@@ -82,12 +84,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_menu');
+            if (!$isSqlite) $table->primary('id_menu');
             $table->foreign('id_kategori')->references('id_kategori')->on('kategori')->onDelete('cascade');
         });
 
         // 7. meja
-        Schema::create('meja', function (Blueprint $table) {
+        Schema::create('meja', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_meja')->autoIncrement();
             $table->integer('nomor_meja');
             $table->string('qrcode_token', 255)->unique();
@@ -95,11 +97,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_meja');
+            if (!$isSqlite) $table->primary('id_meja');
         });
 
         // 8. pesanan
-        Schema::create('pesanan', function (Blueprint $table) {
+        Schema::create('pesanan', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_pesanan')->autoIncrement();
             $table->string('kode_struk', 255)->unique();
             $table->integer('id_meja');
@@ -111,13 +113,13 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_pesanan');
+            if (!$isSqlite) $table->primary('id_pesanan');
             $table->foreign('id_meja')->references('id_meja')->on('meja')->onDelete('cascade');
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
         });
 
         // 9. detail_pesanan
-        Schema::create('detail_pesanan', function (Blueprint $table) {
+        Schema::create('detail_pesanan', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_detail')->autoIncrement();
             $table->integer('id_pesanan')->nullable(); // Can be null in draft state before payment confirmation
             $table->integer('id_menu');
@@ -132,13 +134,13 @@ return new class extends Migration
             // Temporary field to track orders that are guest drafts for a table before they are paid/confirmed
             $table->integer('id_meja_temp')->nullable(); 
 
-            $table->primary('id_detail');
+            if (!$isSqlite) $table->primary('id_detail');
             $table->foreign('id_pesanan')->references('id_pesanan')->on('pesanan')->onDelete('cascade');
             $table->foreign('id_menu')->references('id_menu')->on('menu')->onDelete('cascade');
         });
 
         // 10. activity_log
-        Schema::create('activity_log', function (Blueprint $table) {
+        Schema::create('activity_log', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_log')->autoIncrement();
             $table->integer('id_user')->nullable(); // nullable to support guest actions
             $table->string('aktivitas', 255);
@@ -147,12 +149,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_log');
+            if (!$isSqlite) $table->primary('id_log');
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
         });
 
         // 11. history_update
-        Schema::create('history_update', function (Blueprint $table) {
+        Schema::create('history_update', function (Blueprint $table) use ($isSqlite) {
             $table->integer('id_update')->autoIncrement();
             $table->string('table', 255);
             $table->integer('record_id');
@@ -161,7 +163,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->primary('id_update');
+            if (!$isSqlite) $table->primary('id_update');
         });
 
         // Laravel Default Tables Support

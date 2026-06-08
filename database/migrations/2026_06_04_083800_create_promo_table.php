@@ -8,8 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('promo')) {
-            Schema::create('promo', function (Blueprint $table) {
+                if (!Schema::hasTable('promo')) {
+            $isSqlite = Schema::getConnection()->getDriverName() === 'sqlite';
+            Schema::create('promo', function (Blueprint $table) use ($isSqlite) {
                 $table->integer('id_promo')->autoIncrement();
                 $table->string('nama_promo', 50);
                 $table->enum('tipe_promo', ['Harian', 'Mingguan', 'Bulanan', 'Sekali Pakai']);
@@ -20,7 +21,7 @@ return new class extends Migration
                 $table->timestamps();
                 $table->softDeletes();
 
-                $table->primary('id_promo');
+                if (!$isSqlite) $table->primary('id_promo');
             });
         }
 

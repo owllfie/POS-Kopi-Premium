@@ -13,7 +13,6 @@ use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\MenuManageController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\MejaController;
-use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\AksesController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingController;
@@ -39,14 +38,15 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 // Shift Cashier start/end trigger actions (Kasir-facing)
-Route::post('/dashboard/start-shift', [DashboardController::class, 'startShift'])->name('shift.start');
-Route::post('/dashboard/end-shift', [DashboardController::class, 'endShift'])->name('shift.end');
+Route::post('/pesanan/start-shift', [DashboardController::class, 'startShift'])->name('shift.start');
+Route::post('/pesanan/end-shift', [DashboardController::class, 'endShift'])->name('shift.end');
 
 Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan');
 Route::post('/pesanan/{id}/status', [PesananController::class, 'updateStatus'])->name('pesanan.updateStatus');
 
 Route::get('/pesanan/{id}/bayar', [PembayaranController::class, 'showPayment'])->name('pesanan.bayar');
 Route::post('/pesanan/{id}/bayar', [PembayaranController::class, 'processPayment']);
+Route::post('/pesanan/{id}/scan-barcode', [PembayaranController::class, 'scanBarcode'])->name('pesanan.scan-barcode');
 Route::post('/pembayaran/finish', [PembayaranController::class, 'finishPayment'])->name('pembayaran.finish');
 Route::post('/midtrans/notification', [PembayaranController::class, 'notification']);
 
@@ -125,13 +125,7 @@ Route::prefix('jabatan')->name('jabatan.')->group(function () {
     Route::post('/force-delete/{id}', [JabatanController::class, 'forceDelete'])->name('forceDelete');
 });
 
-Route::prefix('shift')->name('shift.')->group(function () {
-    Route::get('/', [ShiftController::class, 'index'])->name('index');
-    Route::post('/update/{id}', [ShiftController::class, 'update'])->name('update');
-    Route::post('/delete/{id}', [ShiftController::class, 'delete'])->name('delete');
-    Route::post('/restore/{id}', [ShiftController::class, 'restore'])->name('restore');
-    Route::post('/force-delete/{id}', [ShiftController::class, 'forceDelete'])->name('forceDelete');
-});
+
 
 Route::prefix('akses')->name('akses.')->group(function () {
     Route::get('/', [AksesController::class, 'index'])->name('index');

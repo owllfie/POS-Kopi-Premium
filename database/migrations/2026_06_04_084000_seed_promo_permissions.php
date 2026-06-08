@@ -9,7 +9,8 @@ return new class extends Migration
     {
         // Add access permission rules for the 'promo' module
         $exists = DB::table('aksess')->where('modul', 'promo')->exists();
-        if (!$exists) {
+        $rolesExist = DB::table('role')->count() > 0;
+        if (!$exists && $rolesExist) {
             DB::table('aksess')->insert([
                 ['id_role' => 1, 'modul' => 'promo', 'allowed' => '1', 'created_at' => now(), 'updated_at' => now()],
                 ['id_role' => 2, 'modul' => 'promo', 'allowed' => '1', 'created_at' => now(), 'updated_at' => now()],

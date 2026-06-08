@@ -155,5 +155,127 @@
         </div>
     </div>
 
+    <!-- Penjualan Harian & Shift Kasir Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Live Performance/Daily Sales Breakdown (CASH vs QRIS) -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-5 lg:col-span-1">
+            <div>
+                <h4 class="font-bold text-coffee-dark mb-1">Breakdown Omset Harian</h4>
+                <p class="text-xs text-coffee-light font-medium">Distribusi metode pembayaran penjualan hari ini.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Tunai -->
+                <div class="p-4 rounded-xl bg-amber-50/50 border border-amber-100 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-coffee-medium">
+                            <svg class="w-5 h-5 text-coffee-medium" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-semibold text-coffee-light uppercase tracking-wider">Tunai (CASH)</span>
+                            <h5 class="font-extrabold text-coffee-dark">Rp {{ number_format($todaySales['cash_masuk'], 0, ',', '.') }}</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QRIS -->
+                <div class="p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 8h16M4 16h16M4 20h16"/></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-semibold text-coffee-light uppercase tracking-wider">Non-Tunai (QRIS)</span>
+                            <h5 class="font-extrabold text-coffee-dark">Rp {{ number_format($todaySales['qris_masuk'], 0, ',', '.') }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pt-3 border-t border-coffee-latte text-xs font-semibold text-coffee-medium flex justify-between">
+                <span>Total Transaksi Hari Ini:</span>
+                <span class="font-bold text-coffee-dark">{{ $todaySales['total_transaksi'] }} Transaksi</span>
+            </div>
+        </div>
+
+        <!-- Shift Kerja Active & History Today -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card lg:col-span-2 space-y-4">
+            <div>
+                <h4 class="font-bold text-coffee-dark mb-1">Shift Kerja & Status Kasir Harian</h4>
+                <p class="text-xs text-coffee-light font-medium">Pantau jam operasional kasir dan laci kas hari ini.</p>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3">Kasir</th>
+                            <th class="pb-3">Jam Kerja</th>
+                            <th class="pb-3">Omset Shift</th>
+                            <th class="pb-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
+                        @forelse($todayShifts as $shift)
+                            <tr>
+                                <td class="py-3.5 font-bold text-coffee-dark text-xs">{{ $shift->user->username }}</td>
+                                <td class="py-3.5">
+                                    <span class="block">Mulai: {{ $shift->jam_mulai->format('H:i') }}</span>
+                                    <span class="text-[10px] text-coffee-light">
+                                        Selesai: {{ $shift->jam_selesai ? $shift->jam_selesai->format('H:i') : '--:-- (Aktif)' }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5">
+                                    <span class="block font-bold">Rp {{ number_format($shift->total_masuk, 0, ',', '.') }}</span>
+                                    <span class="text-[10px] text-coffee-light">
+                                        Cash: Rp {{ number_format($shift->cash_masuk, 0, ',', '.') }} | QRIS: Rp {{ number_format($shift->qris_masuk, 0, ',', '.') }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5">
+                                    @if($shift->jam_selesai)
+                                        <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-gray-100 border border-gray-200 text-gray-500">
+                                            Selesai
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-amber-100 border border-amber-200 text-coffee-light animate-pulse">
+                                            Aktif
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="py-6 text-center text-coffee-light font-medium">Belum ada aktivitas shift hari ini.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shift Logs / Activity Feed -->
+    @if(count($todayShiftLogs) > 0)
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-4">
+            <h4 class="font-bold text-coffee-dark">Log Pembukaan & Penutupan Shift Hari Ini</h4>
+            <div class="divide-y divide-coffee-latte">
+                @foreach($todayShiftLogs as $log)
+                    <div class="py-3 flex items-start justify-between gap-4 text-xs border-b border-coffee-latte last:border-b-0">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded text-[9px] uppercase font-bold {{ $log->aktivitas === 'START_SHIFT' ? 'bg-emerald-100 border border-emerald-200 text-emerald-800' : 'bg-red-100 border border-red-200 text-red-800' }}">
+                                    {{ $log->aktivitas === 'START_SHIFT' ? 'Mulai Shift' : 'Tutup Shift' }}
+                                </span>
+                                <span class="font-extrabold text-coffee-dark">Kasir: {{ $log->user->username }}</span>
+                            </div>
+                            <p class="text-coffee-medium font-semibold">{{ $log->detail_aktivitas }}</p>
+                        </div>
+                        <span class="text-[10px] text-coffee-light font-medium flex-shrink-0">{{ $log->created_at->format('H:i:s') }} ({{ $log->created_at->diffForHumans() }})</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
 </div>
 @endsection

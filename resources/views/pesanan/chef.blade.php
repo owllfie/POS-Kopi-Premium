@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Antrean Dapur')
-@section('page_title', 'Antrean Dapur (Chef Queue)')
+@section('title', 'Antrean Pesanan')
+@section('page_title', 'Antrean Pesanan')
 
 @section('styles')
     <!-- Auto refresh every 30 seconds -->
@@ -29,7 +29,30 @@
             <div class="bg-white rounded-2xl border border-coffee-latte shadow-md overflow-hidden coffee-card">
                 <!-- Header of Table -->
                 <div class="bg-coffee-dark text-white p-4 flex justify-between items-center">
-                    <h3 class="font-bold text-sm">Meja {{ $meja ? $meja->nomor_meja : '?' }}</h3>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-sm">Meja {{ $meja ? $meja->nomor_meja : '?' }}</h3>
+                        
+                        <!-- Table TTS Read Aloud -->
+                        @php
+                            $tableText = "Meja " . ($meja ? $meja->nomor_meja : '?') . ". ";
+                            foreach($details as $item) {
+                                $tableText .= $item->jumlah . " " . $item->menu->nama_menu . ". ";
+                                if ($item->catatan) {
+                                    $tableText .= "Catatan: " . $item->catatan . ". ";
+                                }
+                            }
+                        @endphp
+                        <button 
+                            type="button" 
+                            onclick="speakIndonesian('{{ addslashes($tableText) }}')"
+                            class="p-1 rounded-md text-coffee-gold hover:bg-coffee-medium transition duration-150 cursor-pointer flex items-center justify-center"
+                            title="Baca Pesanan Meja Ini"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                            </svg>
+                        </button>
+                    </div>
                     <span class="text-[10px] bg-coffee-medium text-coffee-gold px-2 py-0.5 rounded font-extrabold uppercase">
                         {{ $details->count() }} Item Masakan
                     </span>
@@ -43,6 +66,24 @@
                                 <div class="flex items-center gap-2">
                                     <span class="font-bold text-sm text-coffee-dark">{{ $item->menu->nama_menu }}</span>
                                     <span class="text-xs font-extrabold text-coffee-light">x{{ $item->jumlah }}</span>
+
+                                    <!-- Item TTS Read Aloud -->
+                                    @php
+                                        $itemText = $item->jumlah . " " . $item->menu->nama_menu . ". ";
+                                        if ($item->catatan) {
+                                            $itemText .= "Catatan: " . $item->catatan . ". ";
+                                        }
+                                    @endphp
+                                    <button 
+                                        type="button" 
+                                        onclick="speakIndonesian('{{ addslashes($itemText) }}')"
+                                        class="p-0.5 rounded text-coffee-light hover:text-coffee-dark hover:bg-coffee-cream transition duration-150 cursor-pointer flex items-center justify-center"
+                                        title="Baca Item Ini"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                        </svg>
+                                    </button>
                                 </div>
                                 @if($item->catatan)
                                     <p class="text-[11px] bg-red-50 border border-red-100 text-red-700 px-2 py-1 rounded-lg inline-block font-semibold">
@@ -88,4 +129,40 @@
     </div>
 
 </div>
+@endsection
+
+@section('scripts')
+    <script>
+        function speakIndonesian(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel current speech if speaking
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID';
+                
+                // Fetch voices and try to assign an Indonesian speech voice
+                const voices = window.speechSynthesis.getVoices();
+                const idVoice = voices.find(v => v.lang.includes('id-ID') || v.lang.includes('id_ID'));
+                if (idVoice) {
+                    utterance.voice = idVoice;
+                }
+                
+                // Adjust rate slightly for clear dictation in kitchen environment
+                utterance.rate = 0.95;
+                utterance.pitch = 1;
+                
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("Text-to-speech tidak didukung di browser ini.");
+            }
+        }
+        
+        // Chrome requires voice loading event listener because voices load asynchronously
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.getVoices();
+            };
+        }
+    </script>
 @endsection

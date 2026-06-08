@@ -38,7 +38,7 @@ class DashboardController extends Controller
         } elseif ($role === 'manager') {
             return $this->managerDashboard($user);
         } elseif ($role === 'kasir') {
-            return $this->kasirDashboard($user);
+            return redirect()->route('pesanan');
         }
 
         // Chef doesn't have a dashboard, redirects to /pesanan
@@ -105,6 +105,27 @@ class DashboardController extends Controller
         $pendapatanBulanIni = Pesanan::where('created_at', '>=', $startOfMonth)->sum('total_bayar');
         $totalTransaksiBulanIni = Pesanan::where('created_at', '>=', $startOfMonth)->count();
 
+        // Daily shift/sales details for today (Penjualan Harian)
+        $todaySales = [
+            'total_transaksi' => Pesanan::whereDate('created_at', $today)->count(),
+            'total_pendapatan' => Pesanan::whereDate('created_at', $today)->sum('total_bayar'),
+            'cash_masuk' => Pesanan::whereDate('created_at', $today)->where('metode_pembayaran', 'cash')->sum('total_bayar'),
+            'qris_masuk' => Pesanan::whereDate('created_at', $today)->where('metode_pembayaran', 'qris')->sum('total_bayar'),
+        ];
+
+        // Today's shifts details
+        $todayShifts = Shift::with('user')
+            ->whereDate('jam_mulai', $today)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Today's Shift Logs from ActivityLog
+        $todayShiftLogs = ActivityLog::with('user')
+            ->whereIn('aktivitas', ['START_SHIFT', 'END_SHIFT'])
+            ->whereDate('created_at', $today)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         // Revenue trend data (Daily last 7 days)
         $chartLabels = [];
         $chartData = [];
@@ -119,6 +140,9 @@ class DashboardController extends Controller
             'pendapatanMingguIni',
             'pendapatanBulanIni',
             'totalTransaksiBulanIni',
+            'todaySales',
+            'todayShifts',
+            'todayShiftLogs',
             'chartLabels',
             'chartData'
         ));
@@ -188,7 +212,7 @@ class DashboardController extends Controller
             ->first();
 
         if ($activeShift) {
-            return redirect()->route('dashboard')->with('error', 'Shift Anda sudah aktif.');
+            return redirect()->route('pesanan')->with('error', 'Shift Anda sudah aktif.');
         }
 
         Shift::create([
@@ -209,7 +233,7 @@ class DashboardController extends Controller
         // Store kas awal in session
         session(['kas_awal_' . $user->id_user => $request->kas_awal]);
 
-        return redirect()->route('dashboard')->with('success', 'Shift berhasil dimulai.');
+        return redirect()->route('pesanan')->with('success', 'Shift berhasil dimulai.');
     }
 
     // End shift action
@@ -226,7 +250,7 @@ class DashboardController extends Controller
             ->first();
 
         if (!$activeShift) {
-            return redirect()->route('dashboard')->with('error', 'Tidak ada shift aktif.');
+            return redirect()->route('pesanan')->with('error', 'Tidak ada shift aktif.');
         }
 
         $kasAwal = session('kas_awal_' . $user->id_user, 0);
@@ -251,6 +275,6 @@ class DashboardController extends Controller
         // Clean session
         session()->forget('kas_awal_' . $user->id_user);
 
-        return redirect()->route('dashboard')->with('success', 'Shift ditutup. Selisih kas: Rp ' . number_format($selisih, 0, ',', '.'));
+        return redirect()->route('pesanan')->with('success', 'Shift ditutup. Selisih kas: Rp ' . number_format($selisih, 0, ',', '.'));
     }
 }

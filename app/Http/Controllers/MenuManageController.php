@@ -92,6 +92,8 @@ class MenuManageController extends Controller
             'paket_makanan' => 'nullable|array',
             'paket_minuman' => 'nullable|array',
             'paket_addons' => 'nullable|string|max:500',
+            'kode_menu' => 'nullable|numeric|digits_between:1,20',
+            'deskripsi' => 'nullable|string|max:255',
         ]);
 
         if (!empty($validated['paket_makanan'])) {
@@ -143,6 +145,8 @@ class MenuManageController extends Controller
             'paket_makanan' => 'nullable|array',
             'paket_minuman' => 'nullable|array',
             'paket_addons' => 'nullable|string|max:500',
+            'kode_menu' => 'nullable|numeric|digits_between:1,20',
+            'deskripsi' => 'nullable|string|max:255',
         ]);
 
         if (!empty($validated['paket_makanan'])) {
