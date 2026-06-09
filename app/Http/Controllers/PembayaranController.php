@@ -97,8 +97,10 @@ class PembayaranController extends Controller
             ->get();
 
         $allTables = Meja::orderBy('nomor_meja', 'asc')->get();
+        $menus = Menu::where('status', 'tersedia')->get();
+        $categories = \App\Models\Kategori::all();
 
-        return view('pembayaran.show', compact('meja', 'pendingItems', 'subtotal', 'pajakPersen', 'pajak', 'totalBayar', 'activePromos', 'allTables', 'activeShift'));
+        return view('pembayaran.show', compact('meja', 'pendingItems', 'subtotal', 'pajakPersen', 'pajak', 'totalBayar', 'activePromos', 'allTables', 'activeShift', 'menus', 'categories'));
     }
 
     public function scanBarcode(Request $request, $meja_id)

@@ -27,11 +27,20 @@ class GuestMenuController extends Controller
         }])->get();
 
         // Get currently pending orders for this table (in-progress orders)
-        $currentOrders = DetailPesanan::where('id_meja_temp', $meja->id_meja)
+        $rawOrders = DetailPesanan::where('id_meja_temp', $meja->id_meja)
             ->whereNull('id_pesanan') // Not yet checked out / paid
             ->with('menu')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        $currentOrders = $rawOrders->groupBy(function($item) {
+            return $item->id_menu . '_' . $item->status . '_' . trim($item->catatan);
+        })->map(function($group) {
+            $first = $group->first();
+            $combined = clone $first;
+            $combined->jumlah = $group->sum('jumlah');
+            return $combined;
+        });
 
         return view('menu.show', compact('meja', 'categories', 'currentOrders'));
     }

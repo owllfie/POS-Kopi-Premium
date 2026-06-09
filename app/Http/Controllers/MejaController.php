@@ -26,7 +26,7 @@ class MejaController extends Controller
             $tab = 'trash';
         }
 
-        $query = Meja::query();
+        $query = Meja::where('nomor_meja', '!=', 99);
 
         if ($tab === 'trash') {
             $query->onlyTrashed();
@@ -46,7 +46,9 @@ class MejaController extends Controller
     {
         $admin = $this->getActiveUser();
         $validated = $request->validate([
-            'nomor_meja' => 'required|integer|min:1',
+            'nomor_meja' => 'required|integer|min:1|not_in:99',
+        ], [
+            'nomor_meja.not_in' => 'Nomor meja 99 dicadangkan untuk sistem Takeaway dan tidak dapat dibuat manual.',
         ]);
 
         // Auto-generate UUID for QR code token
@@ -64,8 +66,10 @@ class MejaController extends Controller
         $meja = Meja::findOrFail($id);
 
         $validated = $request->validate([
-            'nomor_meja' => 'required|integer|min:1',
+            'nomor_meja' => 'required|integer|min:1|not_in:99',
             'status' => 'required|string|in:kosong,terisi',
+        ], [
+            'nomor_meja.not_in' => 'Nomor meja 99 dicadangkan untuk sistem Takeaway.',
         ]);
 
         $meja->update($validated);

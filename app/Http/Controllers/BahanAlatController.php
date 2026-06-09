@@ -58,7 +58,7 @@ class BahanAlatController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
-            'stok' => 'required|numeric|min:0',
+            'stok' => 'required|integer|min:0',
             'satuan' => 'required|string|max:50',
             'harga_estimasi' => 'required|numeric|min:0',
             'keterangan' => 'nullable|string',
@@ -86,7 +86,7 @@ class BahanAlatController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
-            'stok' => 'required|numeric|min:0',
+            'stok' => 'required|integer|min:0',
             'satuan' => 'required|string|max:50',
             'harga_estimasi' => 'required|numeric|min:0',
             'keterangan' => 'nullable|string',
@@ -102,6 +102,36 @@ class BahanAlatController extends Controller
         ]);
 
         return back()->with('success', 'Detail bahan berhasil diperbarui.');
+    }
+
+    public function updateStok(Request $request, $id)
+    {
+        $user = $this->getActiveUser();
+        $item = BahanAlat::where('tipe', 'bahan')->findOrFail($id);
+        $action = $request->input('action'); // 'plus' or 'minus'
+        
+        $oldStok = $item->stok;
+        if ($action === 'plus') {
+            $item->stok += 1;
+        } elseif ($action === 'minus') {
+            if ($item->stok > 0) {
+                $item->stok -= 1;
+            }
+        }
+        
+        $item->save();
+
+        ActivityLog::create([
+            'id_user' => $user ? $user->id_user : null,
+            'aktivitas' => 'UPDATE_INVENTORY_STOK',
+            'detail_aktivitas' => "Updated stock of ingredient {$item->nama_item} from {$oldStok} to {$item->stok}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'new_stok' => $item->stok
+        ]);
     }
 
     public function delete(Request $request, $id)

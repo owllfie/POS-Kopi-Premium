@@ -41,6 +41,10 @@ class DashboardController extends Controller
             return redirect()->route('pesanan');
         }
 
+        if ($role === 'stock keeper') {
+            return redirect()->route('bahan-alat.index');
+        }
+
         // Chef doesn't have a dashboard, redirects to /pesanan
         return redirect()->route('pesanan');
     }

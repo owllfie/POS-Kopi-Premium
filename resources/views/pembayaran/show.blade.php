@@ -22,7 +22,7 @@
 @endphp
 
 @if($isKasir && !$activeShift)
-    <!-- Buka Shift Baru (Show full page start shift card instead of other options) -->
+    <!-- Buka Shift Baru -->
     <div class="max-w-md mx-auto my-12 bg-white rounded-3xl border border-coffee-latte shadow-xl p-8 coffee-card animate-fade-in">
         <div class="text-center mb-6">
             <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-coffee-medium border border-amber-100 mx-auto mb-4">
@@ -61,269 +61,400 @@
         </form>
     </div>
 @else
-    <div x-data="{ endShiftModal: false }">
-                <!-- Table Switcher at the top -->
-        <div class="max-w-4xl mx-auto mb-6 bg-white rounded-2xl border border-coffee-latte p-4 flex flex-col sm:flex-row items-center justify-between gap-4 coffee-card">
-            <div>
-                <h3 class="font-extrabold text-coffee-dark text-sm">Pilih Meja Transaksi</h3>
-                <p class="text-[10px] text-coffee-light font-medium mt-0.5">Pilih meja untuk melakukan input pembayaran.</p>
-            </div>
-            <div class="flex gap-3 w-full sm:w-auto">
-                <select 
-                    onchange="window.location.href = `/pesanan/${this.value}/bayar`"
-                    class="w-full sm:w-64 px-4 py-2 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
-                >
-                    @foreach($allTables as $t)
-                        <option value="{{ $t->id_meja }}" {{ $t->id_meja == $meja->id_meja ? 'selected' : '' }} {{ ($t->status === 'kosong' && $t->nomor_meja != 99) ? 'disabled' : '' }}>
-                            {{ $t->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $t->nomor_meja }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-
-        <div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6" x-data="paymentProcessor({{ $subtotal }}, {{ $pajakPersen }}, {{ json_encode($activePromos) }}, {{ json_encode($pendingItems) }}, {{ $meja->id_meja }})">
-
-    <!-- Order Items Summary Column -->
-    <div class="lg:col-span-2 space-y-6">
-        <!-- Barcode Scanner Card -->
-        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
-            <h4 class="text-xs font-bold text-coffee-medium uppercase tracking-wider mb-3">Scan Barcode Menu</h4>
-            <form action="{{ route('pesanan.scan-barcode', $meja->id_meja) }}" method="POST" class="relative flex items-center">
-                @csrf
-                <div class="relative w-full">
-                    <span class="absolute left-4 top-3 text-coffee-light">
-                        <svg class="w-5 h-5 text-coffee-medium" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14M3 5h18M3 19h18"/></svg>
-                    </span>
-                    <input 
-                        type="text" 
-                        name="barcode" 
-                        id="barcode_input" 
-                        placeholder="Scan atau ketik barcode item..." 
-                        class="w-full pl-12 pr-24 py-2.5 rounded-xl border border-coffee-latte focus:outline-none focus:ring-2 focus:ring-coffee-light/50 focus:border-coffee-light text-sm font-semibold text-coffee-dark transition bg-white"
-                        autofocus
-                        required
-                    >
-                    <button type="submit" class="absolute right-2 top-1.5 px-4 py-1.5 bg-coffee-dark text-white rounded-lg text-xs font-bold hover:bg-coffee-medium transition shadow-sm cursor-pointer">
-                        Tambah
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-4">
-            <div class="flex items-center justify-between border-b border-coffee-latte pb-3">
-                <h3 class="font-extrabold text-coffee-dark">Rincian Belanja {{ $meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $meja->nomor_meja }}</h3>
-                <span class="text-xs text-coffee-light font-bold">POS Kopi Premium</span>
-            </div>
-
-            <!-- Items -->
-            <div class="divide-y divide-coffee-latte">
-                @forelse($pendingItems as $item)
-                    <div class="py-3 first:pt-0 last:pb-0 flex items-center justify-between text-sm">
-                        <div>
-                            <p class="font-bold text-coffee-dark">{{ $item->menu->nama_menu }}</p>
-                            <p class="text-xs text-coffee-light font-medium">
-                                Rp {{ number_format($item->harga_satuan, 0, ',', '.') }} x {{ $item->jumlah }}
-                                @if($item->catatan)
-                                    <span class="text-red-600 block text-[10px] font-semibold italic">Catatan: "{{ $item->catatan }}"</span>
-                                @endif
-                            </p>
-                        </div>
-                        <span class="font-bold text-coffee-medium">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
-                    </div>
-                @empty
-                    <div class="py-6 text-center text-coffee-light font-medium text-xs">
-                        Belum ada item belanja. Silakan scan barcode di atas.
-                    </div>
-                @endforelse
-            </div>
-
-            <!-- Totals calculation -->
-            <div class="border-t border-coffee-latte pt-4 space-y-2.5 text-xs font-semibold text-coffee-medium">
-                <div class="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
-                </div>
-                <div class="flex justify-between text-rose-600" x-show="discount > 0" x-transition>
-                    <span>Diskon Promo:</span>
-                    <span x-text="'- ' + formatRupiah(discount)"></span>
-                </div>
-                <div class="flex justify-between">
-                    <span>Pajak ({{ $pajakPersen }}%):</span>
-                    <span x-text="formatRupiah(tax)"></span>
-                </div>
-                <div class="flex justify-between border-t border-coffee-latte pt-2.5 font-bold text-sm text-coffee-dark">
-                    <span>Total Bayar:</span>
-                    <span class="text-base text-coffee-light font-black" x-text="formatRupiah(total)"></span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Payment Actions Column -->
-    <div class="space-y-6">
-        <form action="{{ route('pesanan.bayar', $meja->id_meja) }}" method="POST" class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-5" id="payment-form">
-            @csrf
-            <h3 class="font-extrabold text-coffee-dark border-b border-coffee-latte pb-3">Konfirmasi Transaksi</h3>
-                        
-            <h4 class="font-bold text-coffee-medium text-xs uppercase tracking-wider pt-2 border-t border-coffee-latte/50">Metode Pembayaran</h4>
+    <div x-data="{ 
+        endShiftModal: false, 
+        searchQuery: '', 
+        selectedCategory: 'all',
+        filterMenus() {
+            return {{ json_encode($menus) }}.filter(menu => {
+                const matchesSearch = menu.nama_menu.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                                     menu.kode_menu.toLowerCase().includes(this.searchQuery.toLowerCase());
+                const matchesCategory = this.selectedCategory === 'all' || menu.id_kategori == this.selectedCategory;
+                return matchesSearch && matchesCategory;
+            });
+        },
+        addByClick(kode) {
+            const input = document.getElementById('barcode_input');
+            input.value = kode;
+            input.closest('form').submit();
+        }
+    }">
+        <div class="max-w-full mx-auto px-2 grid grid-cols-1 lg:grid-cols-12 gap-3" x-data="paymentProcessor({{ $subtotal }}, {{ $pajakPersen }}, {{ json_encode($activePromos) }}, {{ json_encode($pendingItems) }}, {{ $meja->id_meja }})">
             
-            <!-- Method Selectors -->
-            <div class="grid grid-cols-2 gap-3">
-                <label class="cursor-pointer">
-                    <input type="radio" name="metode_pembayaran" value="cash" x-model="method" class="sr-only">
-                    <div 
-                        class="p-4 rounded-xl border text-center font-bold text-xs transition duration-150"
-                        :class="method === 'cash' ? 'bg-coffee-dark text-white border-coffee-dark shadow' : 'bg-coffee-cream border-coffee-latte text-coffee-light hover:bg-coffee-latte/50'"
-                    >
-                        Uang Tunai (CASH)
-                    </div>
-                </label>
-                
-                <label class="cursor-pointer">
-                    <input type="radio" name="metode_pembayaran" value="qris" x-model="method" class="sr-only">
-                    <div 
-                        class="p-4 rounded-xl border text-center font-bold text-xs transition duration-150"
-                        :class="method === 'qris' ? 'bg-coffee-dark text-white border-coffee-dark shadow' : 'bg-coffee-cream border-coffee-latte text-coffee-light hover:bg-coffee-latte/50'"
-                    >
-                        QRIS Digital
-                    </div>
-                </label>
-            </div>
-
-            <!-- CASH Calculation Area -->
-            <div x-show="method === 'cash'" class="space-y-4" x-transition>
-                <div>
-                    <label for="nominal_bayar" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Uang Diterima (Nominal)</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-3 text-sm font-semibold text-coffee-light">Rp</span>
+            <!-- Left Column: Menus & Filters (3/12) -->
+            <div class="lg:col-span-4 space-y-3">
+                <div class="bg-white rounded-xl border border-coffee-latte p-3 coffee-card shadow-sm">
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <input 
-                            type="number" 
-                            name="nominal_bayar" 
-                            id="nominal_bayar" 
-                            x-model.number="nominal"
-                            x-on:input="calculateChange"
-                            class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-coffee-latte focus:outline-none focus:ring-2 focus:ring-coffee-light/50 focus:border-coffee-light text-sm font-bold text-coffee-dark transition"
-                            placeholder="Contoh: 100000"
+                            type="text" 
+                            x-model="searchQuery" 
+                            placeholder="Cari menu..." 
+                            class="flex-1 px-3 py-1.5 rounded-lg border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
                         >
+                        
+                        <select 
+                            x-model="selectedCategory"
+                            class="w-full sm:w-40 px-3 py-1.5 rounded-lg border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
+                        >
+                            <option value="all">Semua Kategori</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id_kategori }}">{{ $cat->nama_kategori }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
-                <!-- Quick amount shortcuts -->
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" @click="setNominal(50000)" class="py-1.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-text border border-coffee-latte rounded-lg text-[10px] font-bold transition">50.000</button>
-                    <button type="button" @click="setNominal(100000)" class="py-1.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-text border border-coffee-latte rounded-lg text-[10px] font-bold transition">100.000</button>
-                    <button type="button" @click="setNominal(200000)" class="py-1.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-text border border-coffee-latte rounded-lg text-[10px] font-bold transition">200.000</button>
-                </div>
-
-                <!-- Change Calculation Result -->
-                <div class="bg-amber-50 rounded-xl p-4 border border-amber-100 flex items-center justify-between">
-                    <span class="text-xs font-semibold text-coffee-medium">Uang Kembalian:</span>
-                    <strong class="text-base font-extrabold" :class="change >= 0 ? 'text-emerald-800' : 'text-rose-600'" x-text="formatRupiah(change)"></strong>
-                </div>
-            </div>
-
-            <!-- QRIS Info Area (Removed) -->
-            <div x-show="method === 'qris'" class="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center" x-transition>
-                <p class="text-xs text-blue-800 font-medium">Pembayaran akan diproses melalui jendela aman Midtrans setelah Anda menekan konfirmasi.</p>
-            </div>
-
-            <!-- Submit buttons -->
-            <div class="space-y-2 pt-2 border-t border-coffee-latte">
-                <button 
-                    type="button"
-                    @click="confirmPayment"
-                    class="w-full py-3.5 bg-coffee-dark text-white rounded-xl font-bold hover:bg-coffee-medium transition shadow-md cursor-pointer flex items-center justify-center space-x-2"
-                    :disabled="(method === 'cash' && change < 0) || loading || subtotal === 0"
-                    :class="((method === 'cash' && change < 0) || loading || subtotal === 0) ? 'opacity-50 cursor-not-allowed' : ''"
-                >
-                    <template x-if="loading">
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </template>
-                    <span x-text="loading ? 'Memproses...' : 'Konfirmasi Pembayaran Lunas'"></span>
-                </button>
-                <a href="{{ route('pesanan') }}" class="block text-center w-full py-2.5 border border-coffee-light text-coffee-dark rounded-xl font-semibold hover:bg-coffee-latte transition text-xs">
-                    Batal
-                </a>
-            </div>
-        </form>
-    </div>
-
-    <!-- Second Confirmation Modal (Confirm Payment Dialog) -->
-    <template x-teleport="body">
-        <div 
-            x-show="showConfirmModal" 
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            x-transition
-            style="display: none;"
-        >
-            <div 
-                @click.away="showConfirmModal = false" 
-                class="bg-white rounded-3xl border border-coffee-latte shadow-2xl p-6 max-w-sm w-full space-y-6 coffee-card"
-            >
-                <div class="text-center space-y-2">
-                    <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-coffee-medium border border-amber-100 mx-auto">
-                        <svg class="w-6 h-6 text-coffee-light" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-base font-bold text-coffee-dark">Konfirmasi Ulang Pembayaran</h3>
-                    <p class="text-xs text-coffee-light font-medium">Apakah Anda yakin ingin menyelesaikan transaksi ini? Harap periksa kembali detail pembayaran berikut:</p>
-                </div>
-    
-                <div class="bg-coffee-cream/50 rounded-xl p-4 border border-coffee-latte space-y-2 text-xs text-coffee-medium font-semibold">
-                    <div class="flex justify-between">
-                        <span>Tipe Pesanan:</span>
-                        <span class="text-coffee-dark font-bold">
-                            {{ $meja->nomor_meja == 99 ? 'Takeaway' : 'Dine-in (Meja ' . $meja->nomor_meja . ')' }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Metode Pembayaran:</span>
-                        <span class="uppercase text-coffee-dark font-bold" x-text="method === 'cash' ? 'Uang Tunai (Cash)' : 'QRIS / Midtrans'"></span>
-                    </div>
-                    <div class="flex justify-between border-t border-coffee-latte/50 pt-2 font-bold text-sm text-coffee-dark">
-                        <span>Total Tagihan:</span>
-                        <span class="text-coffee-light font-black" x-text="formatRupiah(total)"></span>
-                    </div>
-                    <template x-if="method === 'cash'">
-                        <div class="space-y-2 pt-2 border-t border-dashed border-coffee-latte/50">
-                            <div class="flex justify-between">
-                                <span>Uang Diterima:</span>
-                                <span class="text-coffee-dark" x-text="formatRupiah(nominal)"></span>
+                <div class="bg-white rounded-xl border border-coffee-latte p-2 coffee-card h-[calc(100vh-200px)] overflow-y-auto shadow-sm">
+                    <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                        <template x-for="menu in filterMenus()" :key="menu.id_menu">
+                            <div 
+                                @click="addByClick(menu.kode_menu)"
+                                class="p-1.5 border border-coffee-latte rounded-lg hover:bg-coffee-cream cursor-pointer transition text-center group bg-white"
+                            >
+                                <div class="w-full aspect-square bg-coffee-cream rounded-md overflow-hidden mb-1 border border-coffee-latte/50">
+                                    <template x-if="menu.foto">
+                                        <img :src="'/' + menu.foto" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </template>
+                                    <template x-if="!menu.foto">
+                                        <div class="w-full h-full flex items-center justify-center text-coffee-light">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        </div>
+                                    </template>
+                                </div>
+                                <p class="text-[9px] font-extrabold text-coffee-dark leading-tight truncate" x-text="menu.nama_menu"></p>
+                                <p class="text-[9px] font-bold text-coffee-medium" x-text="'Rp ' + Number(menu.harga).toLocaleString('id-ID')"></p>
                             </div>
-                            <div class="flex justify-between font-bold text-emerald-800">
-                                <span>Uang Kembalian:</span>
-                                <span x-text="formatRupiah(change)"></span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Column: Table, Barcode, Orders (4/12) -->
+            <div class="lg:col-span-4 space-y-3">
+                <!-- Table & Barcode Row -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-white rounded-xl border border-coffee-latte p-3 coffee-card shadow-sm flex flex-col justify-center">
+                        <label class="text-[9px] font-bold text-coffee-medium uppercase mb-1">Meja</label>
+                        <select 
+                            onchange="window.location.href = `/pesanan/${this.value}/bayar`"
+                            class="w-full px-2 py-1 rounded-lg border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
+                        >
+                            @foreach($allTables as $t)
+                                <option value="{{ $t->id_meja }}" {{ $t->id_meja == $meja->id_meja ? 'selected' : '' }} {{ ($t->status === 'kosong' && $t->nomor_meja != 99) ? 'disabled' : '' }}>
+                                    {{ $t->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $t->nomor_meja }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-coffee-latte p-3 coffee-card shadow-sm">
+                        <label class="text-[9px] font-bold text-coffee-medium uppercase mb-1">Scan Menu</label>
+                        <form action="{{ route('pesanan.scan-barcode', $meja->id_meja) }}" method="POST" class="relative">
+                            @csrf
+                            <input 
+                                type="text" 
+                                name="barcode" 
+                                id="barcode_input" 
+                                placeholder="Ketik/Scan..." 
+                                class="w-full px-2 py-1 rounded-lg border border-coffee-latte focus:outline-none focus:ring-2 focus:ring-coffee-light/50 text-xs font-semibold text-coffee-dark bg-white"
+                                autofocus
+                                required
+                            >
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Order list -->
+                <div class="bg-white rounded-xl border border-coffee-latte p-4 coffee-card h-[calc(100vh-200px)] flex flex-col shadow-sm">
+                    <div class="flex items-center justify-between border-b border-coffee-latte pb-2 mb-2">
+                        <h3 class="font-extrabold text-xs text-coffee-dark uppercase">Pesanan: {{ $meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . $meja->nomor_meja }}</h3>
+                        <span class="text-[9px] text-coffee-light font-bold">Items: {{ count($pendingItems) }}</span>
+                    </div>
+
+                    <div class="flex-1 divide-y divide-coffee-latte overflow-y-auto pr-1">
+                        @forelse($pendingItems as $item)
+                            <div class="py-2 first:pt-0 last:pb-0 flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="font-bold text-xs text-coffee-dark truncate">{{ $item->menu->nama_menu }}</p>
+                                    <p class="text-[10px] text-coffee-light font-medium">
+                                        {{ $item->jumlah }}x @ Rp{{ number_format($item->harga_satuan, 0, ',', '.') }}
+                                    </p>
+                                    @if($item->catatan)
+                                        <p class="text-[9px] text-red-600 font-bold italic truncate">"{{ $item->catatan }}"</p>
+                                    @endif
+                                </div>
+                                <span class="font-bold text-xs text-coffee-medium flex-shrink-0">Rp{{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                            </div>
+                        @empty
+                            <div class="h-full flex flex-col items-center justify-center text-coffee-light opacity-50 space-y-2">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                <p class="text-[10px] font-bold">Keranjang Kosong</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Payment Details (4/12) -->
+            <div class="lg:col-span-4">
+                <form action="{{ route('pesanan.bayar', $meja->id_meja) }}" method="POST" class="bg-white rounded-xl border border-coffee-latte p-4 coffee-card h-[calc(100vh-120px)] flex flex-col shadow-sm" id="payment-form">
+                    @csrf
+                    <h3 class="font-extrabold text-xs text-coffee-dark border-b border-coffee-latte pb-2 mb-3 uppercase tracking-wider">Konfirmasi Bayar</h3>
+                    
+                    <div class="space-y-2 mb-4 bg-coffee-cream/30 p-3 rounded-lg border border-coffee-latte">
+                        <div class="flex justify-between text-[10px] font-bold text-coffee-medium">
+                            <span>Subtotal</span>
+                            <span>Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-bold text-rose-600" x-show="discount > 0">
+                            <span>Promo</span>
+                            <span x-text="'- ' + formatRupiah(discount)"></span>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-bold text-coffee-medium">
+                            <span>Pajak ({{ $pajakPersen }}%)</span>
+                            <span x-text="formatRupiah(tax)"></span>
+                        </div>
+                        <div class="flex justify-between border-t border-coffee-latte pt-2 items-center">
+                            <span class="text-xs font-black text-coffee-dark uppercase">Total</span>
+                            <span class="text-lg font-black text-coffee-light" x-text="formatRupiah(total)"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 space-y-4">
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="metode_pembayaran" value="cash" x-model="method" class="sr-only">
+                                <div 
+                                    class="py-3 rounded-lg border text-center font-black text-[10px] uppercase transition"
+                                    :class="method === 'cash' ? 'bg-coffee-dark text-white border-coffee-dark shadow-md' : 'bg-coffee-cream border-coffee-latte text-coffee-light hover:bg-coffee-latte/30'"
+                                >
+                                    Tunai
+                                </div>
+                            </label>
+                            
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="metode_pembayaran" value="qris" x-model="method" class="sr-only">
+                                <div 
+                                    class="py-3 rounded-lg border text-center font-black text-[10px] uppercase transition"
+                                    :class="method === 'qris' ? 'bg-coffee-dark text-white border-coffee-dark shadow-md' : 'bg-coffee-cream border-coffee-latte text-coffee-light hover:bg-coffee-latte/30'"
+                                >
+                                    QRIS
+                                </div>
+                            </label>
+                        </div>
+
+                        <div x-show="method === 'cash'" class="space-y-3 pt-2" x-transition>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-xs font-black text-coffee-light">Rp</span>
+                                <input 
+                                    type="number" 
+                                    name="nominal_bayar" 
+                                    id="nominal_bayar" 
+                                    x-model.number="nominal"
+                                    x-on:input="calculateChange"
+                                    value="{{ $totalBayar }}"
+                                    class="w-full pl-9 pr-3 py-2 rounded-lg border border-coffee-latte focus:ring-2 focus:ring-coffee-light/30 text-sm font-black text-coffee-dark bg-white"
+                                    placeholder="0"
+                                >
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <button type="button" @click="setNominal(50000)" class="py-1.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-dark border border-coffee-latte rounded-lg text-[9px] font-black transition">50K</button>
+                                <button type="button" @click="setNominal(100000)" class="py-1.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-dark border border-coffee-latte rounded-lg text-[9px] font-black transition">100K</button>
+                                <button type="button" @click="setNominal(200000)" class="py-1.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-dark border border-coffee-latte rounded-lg text-[9px] font-black transition">200K</button>
+                            </div>
+
+                            <div class="bg-amber-50 rounded-lg p-3 border border-amber-100 flex items-center justify-between">
+                                <span class="text-[10px] font-black text-coffee-medium uppercase">Kembali</span>
+                                <strong class="text-sm font-black" :class="change >= 0 ? 'text-emerald-700' : 'text-rose-600'" x-text="formatRupiah(change)"></strong>
                             </div>
                         </div>
-                    </template>
-                </div>
-    
-                <div class="flex gap-3 pt-2">
-                    <button 
-                        type="button" 
-                        @click="showConfirmModal = false" 
-                        class="w-1/2 py-3 border border-coffee-light text-coffee-dark rounded-xl font-semibold hover:bg-coffee-latte transition text-xs"
-                    >
-                        Batal
-                    </button>
-                    <button 
-                        type="button" 
-                        @click="executePayment" 
-                        class="w-1/2 py-3 bg-coffee-dark text-white rounded-xl font-semibold hover:bg-coffee-medium transition text-xs flex items-center justify-center space-x-1"
-                    >
-                        <span>Ya, Konfirmasi</span>
-                    </button>
-                </div>
+
+                        <div x-show="method === 'qris'" class="p-4 bg-blue-50 border border-blue-100 rounded-lg text-center" x-transition>
+                            <div class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full mb-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                            </div>
+                            <p class="text-[10px] text-blue-800 font-bold leading-tight">Otomatis generate QRIS Midtrans setelah konfirmasi.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto pt-3 border-t border-coffee-latte space-y-2">
+                        <button 
+                            type="button"
+                            @click="confirmPayment"
+                            class="w-full py-3 bg-coffee-dark text-white rounded-lg font-black text-xs uppercase hover:bg-coffee-medium transition shadow-md flex items-center justify-center space-x-2"
+                            :disabled="(method === 'cash' && change < 0) || loading || subtotal === 0"
+                            :class="((method === 'cash' && change < 0) || loading || subtotal === 0) ? 'opacity-50 cursor-not-allowed' : ''"
+                        >
+                            <span x-text="loading ? 'Proses...' : 'Bayar Lunas'"></span>
+                        </button>
+                        <a href="{{ route('pesanan') }}" class="block text-center w-full py-2 text-[10px] font-bold text-coffee-medium hover:text-coffee-dark transition underline">
+                            Batal Transaksi
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
-    </template>
-</div>
+
+        <!-- Second Confirmation Modal -->
+        <template x-teleport="body">
+            <div 
+                x-show="showConfirmModal" 
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                x-transition
+                style="display: none;"
+            >
+                <div 
+                    @click.away="showConfirmModal = false" 
+                    class="bg-white rounded-3xl border border-coffee-latte shadow-2xl p-6 max-w-sm w-full space-y-6 coffee-card"
+                >
+                    <div class="text-center space-y-2">
+                        <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-coffee-medium border border-amber-100 mx-auto">
+                            <svg class="w-6 h-6 text-coffee-light" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-base font-bold text-coffee-dark">Konfirmasi Ulang Pembayaran</h3>
+                        <p class="text-xs text-coffee-light font-medium">Apakah Anda yakin ingin menyelesaikan transaksi ini?</p>
+                    </div>
+        
+                    <div class="bg-coffee-cream/50 rounded-xl p-4 border border-coffee-latte space-y-2 text-xs text-coffee-medium font-semibold">
+                        <div class="flex justify-between">
+                            <span>Tipe Pesanan:</span>
+                            <span class="text-coffee-dark font-bold">
+                                {{ $meja->nomor_meja == 99 ? 'Takeaway' : 'Dine-in (Meja ' . $meja->nomor_meja . ')' }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Metode Pembayaran:</span>
+                            <span class="uppercase text-coffee-dark font-bold" x-text="method === 'cash' ? 'Uang Tunai (Cash)' : 'QRIS / Midtrans'"></span>
+                        </div>
+                        <div class="flex justify-between border-t border-coffee-latte/50 pt-2 font-bold text-sm text-coffee-dark">
+                            <span>Total Tagihan:</span>
+                            <span class="text-coffee-light font-black" x-text="formatRupiah(total)"></span>
+                        </div>
+                        <template x-if="method === 'cash'">
+                            <div class="space-y-2 pt-2 border-t border-dashed border-coffee-latte/50">
+                                <div class="flex justify-between">
+                                    <span>Uang Diterima:</span>
+                                    <span class="text-coffee-dark" x-text="formatRupiah(nominal)"></span>
+                                </div>
+                                <div class="flex justify-between font-bold text-emerald-800">
+                                    <span>Uang Kembalian:</span>
+                                    <span x-text="formatRupiah(change)"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+        
+                    <div class="flex gap-3 pt-2">
+                        <button 
+                            type="button" 
+                            @click="showConfirmModal = false" 
+                            class="w-1/2 py-3 border border-coffee-light text-coffee-dark rounded-xl font-semibold hover:bg-coffee-latte transition text-xs"
+                        >
+                            Batal
+                        </button>
+                        <button 
+                            type="button" 
+                            @click="executePayment" 
+                            class="w-1/2 py-3 bg-coffee-dark text-white rounded-xl font-semibold hover:bg-coffee-medium transition text-xs flex items-center justify-center space-x-1"
+                        >
+                            <span>Ya, Konfirmasi</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Close Shift Modal -->
+        @if($isKasir && $activeShift)
+            <template x-teleport="body">
+                <div 
+                    x-show="endShiftModal" 
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                    x-transition
+                    style="display: none;"
+                >
+                    <div 
+                        @click.away="endShiftModal = false" 
+                        class="bg-white rounded-3xl border border-coffee-latte shadow-2xl p-8 max-w-md w-full space-y-6 coffee-card"
+                    >
+                        <div class="text-center">
+                            <h3 class="text-lg font-bold text-coffee-dark">Konfirmasi Tutup Shift</h3>
+                            <p class="text-xs text-coffee-light font-medium mt-1">Pastikan laci kas sudah dihitung fisiknya untuk menghitung selisih pembukuan.</p>
+                        </div>
+            
+                        @php
+                            $kasAwal = session('kas_awal_' . $activeShift->id_user, 0);
+                            $expectedCash = $kasAwal + $activeShift->cash_masuk;
+                        @endphp
+                        <div class="bg-coffee-cream rounded-xl p-4 text-xs font-semibold text-coffee-text space-y-2 border border-coffee-latte">
+                            <div class="flex justify-between">
+                                <span>Modal Kas Awal:</span>
+                                <span>Rp {{ number_format($kasAwal, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Omset Tunai Masuk:</span>
+                                <span>Rp {{ number_format($activeShift->cash_masuk, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between border-t border-coffee-latte pt-2 font-bold text-sm text-coffee-dark">
+                                <span>Kas Tunai Seharusnya:</span>
+                                <span>Rp {{ number_format($expectedCash, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+            
+                        <form action="{{ route('shift.end') }}" method="POST" class="space-y-4">
+                            @csrf
+                            <div>
+                                <label for="kas_di_tangan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Kas Fisik di Tangan</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-3 text-sm font-semibold text-coffee-light">Rp</span>
+                                    <input 
+                                        type="number" 
+                                        name="kas_di_tangan" 
+                                        id="kas_di_tangan" 
+                                        required 
+                                        min="0" 
+                                        value="{{ $expectedCash }}"
+                                        class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-coffee-latte focus:outline-none focus:ring-2 focus:ring-coffee-light/50 focus:border-coffee-light text-sm font-bold text-coffee-dark transition bg-white"
+                                    >
+                                </div>
+                            </div>
+            
+                            <div>
+                                <label for="note" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Catatan (Opsional)</label>
+                                <textarea 
+                                    name="note" 
+                                    id="note" 
+                                    rows="2"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte focus:outline-none focus:ring-2 focus:ring-coffee-light/50 focus:border-coffee-light text-sm font-semibold text-coffee-dark transition bg-white"
+                                    placeholder="Contoh: Selisih Rp 5.000 karena pembulatan."
+                                ></textarea>
+                            </div>
+            
+                            <div class="flex gap-3 pt-2">
+                                <button 
+                                    type="button" 
+                                    @click="endShiftModal = false" 
+                                    class="w-1/2 py-3 border border-coffee-light text-coffee-dark rounded-xl font-semibold hover:bg-coffee-latte transition text-xs"
+                                >
+                                    Batal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    class="w-1/2 py-3 bg-red-800 text-white rounded-xl font-semibold hover:bg-red-700 transition text-xs"
+                                >
+                                    Tutup Shift
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+        @endif
+    </div>
+@endif
 @endsection
 
 @section('scripts')
@@ -339,7 +470,7 @@
             discount: 0,
             tax: 0,
             total: 0,
-            nominal: 0,
+            nominal: {{ $totalBayar }},
             change: 0,
             mejaId: mejaId,
             loading: false,
@@ -510,97 +641,4 @@
         }
     });
 </script>
-
-
-
-        <!-- Close Shift Modal (End Shift Dialog) -->
-        @if($isKasir && $activeShift)
-            <template x-teleport="body">
-                <div 
-                    x-show="endShiftModal" 
-                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                    x-transition
-                    style="display: none;"
-                >
-                    <div 
-                        @click.away="endShiftModal = false" 
-                        class="bg-white rounded-3xl border border-coffee-latte shadow-2xl p-8 max-w-md w-full space-y-6 coffee-card"
-                    >
-                        <div class="text-center">
-                            <h3 class="text-lg font-bold text-coffee-dark">Konfirmasi Tutup Shift</h3>
-                            <p class="text-xs text-coffee-light font-medium mt-1">Pastikan laci kas sudah dihitung fisiknya untuk menghitung selisih pembukuan.</p>
-                        </div>
-            
-                        <!-- Precalculates shift details -->
-                        @php
-                            $kasAwal = session('kas_awal_' . $activeShift->id_user, 0);
-                            $expectedCash = $kasAwal + $activeShift->cash_masuk;
-                        @endphp
-                        <div class="bg-coffee-cream rounded-xl p-4 text-xs font-semibold text-coffee-text space-y-2 border border-coffee-latte">
-                            <div class="flex justify-between">
-                                <span>Modal Kas Awal:</span>
-                                <span>Rp {{ number_format($kasAwal, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Omset Tunai Masuk:</span>
-                                <span>Rp {{ number_format($activeShift->cash_masuk, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="flex justify-between border-t border-coffee-latte pt-2 font-bold text-sm text-coffee-dark">
-                                <span>Kas Tunai Seharusnya:</span>
-                                <span>Rp {{ number_format($expectedCash, 0, ',', '.') }}</span>
-                            </div>
-                        </div>
-            
-                        <form action="{{ route('shift.end') }}" method="POST" class="space-y-4">
-                            @csrf
-                            <div>
-                                <label for="kas_di_tangan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Kas Fisik di Tangan (Dihitung Manual)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-3 text-sm font-semibold text-coffee-light">Rp</span>
-                                    <input 
-                                        type="number" 
-                                        name="kas_di_tangan" 
-                                        id="kas_di_tangan" 
-                                        required 
-                                        min="0" 
-                                        value="{{ $expectedCash }}"
-                                        class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-coffee-latte focus:outline-none focus:ring-2 focus:ring-coffee-light/50 focus:border-coffee-light text-sm font-bold text-coffee-dark transition bg-white"
-                                    >
-                                </div>
-                            </div>
-            
-                            <div>
-                                <label for="note" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Catatan Perbedaan Kas (Opsional)</label>
-                                <textarea 
-                                    name="note" 
-                                    id="note" 
-                                    rows="2"
-                                    class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte focus:outline-none focus:ring-2 focus:ring-coffee-light/50 focus:border-coffee-light text-sm font-semibold text-coffee-dark transition bg-white"
-                                    placeholder="Contoh: Selisih Rp 5.000 karena uang kembalian dibulatkan."
-                                ></textarea>
-                            </div>
-            
-                            <div class="flex gap-3 pt-2">
-                                <button 
-                                    type="button" 
-                                    @click="endShiftModal = false" 
-                                    class="w-1/2 py-3 border border-coffee-light text-coffee-dark rounded-xl font-semibold hover:bg-coffee-latte transition text-xs"
-                                >
-                                    Batal
-                                </button>
-                                <button 
-                                    type="submit" 
-                                    class="w-1/2 py-3 bg-red-800 text-white rounded-xl font-semibold hover:bg-red-700 transition text-xs"
-                                >
-                                    Tutup Shift
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </template>
-        @endif
-
-    </div>
-@endif
 @endsection

@@ -37,100 +37,165 @@
         ];
     }
 @endphp
-<div class="space-y-6">
+<div class="max-w-[1400px] mx-auto space-y-6" x-data="chefManager()">
 
-    <!-- Auto-refresh Indicator -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-amber-50 border border-amber-100 p-4 rounded-xl text-xs font-semibold">
-        <div class="flex items-center gap-2">
-            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Halaman auto-refresh setiap 30 detik untuk memantau pesanan masuk.</span>
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-coffee-latte gap-4 mb-6">
+        <button 
+            @click="activeTab = 'antrean'" 
+            :class="activeTab === 'antrean' ? 'border-b-2 border-coffee-dark text-coffee-dark' : 'text-coffee-light hover:text-coffee-medium'"
+            class="pb-2 px-4 font-bold text-sm transition cursor-pointer"
+        >
+            Antrean Pesanan
+        </button>
+        <button 
+            @click="activeTab = 'stok'" 
+            :class="activeTab === 'stok' ? 'border-b-2 border-coffee-dark text-coffee-dark' : 'text-coffee-light hover:text-coffee-medium'"
+            class="pb-2 px-4 font-bold text-sm transition cursor-pointer"
+        >
+            Atur Stok Menu
+        </button>
+    </div>
+
+    <!-- Antrean Tab -->
+    <div x-show="activeTab === 'antrean'" class="space-y-6">
+        <!-- Auto-refresh Indicator -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-amber-50 border border-amber-100 p-4 rounded-xl text-xs font-semibold">
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Memantau pesanan masuk secara otomatis.</span>
+            </div>
+            <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                <button 
+                    type="button" 
+                    onclick="toggleSpeaker()" 
+                    class="w-full sm:w-auto flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg border font-bold transition shadow-sm cursor-pointer text-xs"
+                    id="speaker-toggle-btn"
+                >
+                    <svg id="speaker-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"></svg>
+                    <span id="speaker-text">Suara</span>
+                </button>
+
+                <a href="{{ route('pesanan') }}" class="w-full sm:w-auto text-center px-3.5 py-1.5 bg-coffee-dark text-white rounded-lg hover:bg-coffee-medium transition">
+                    Segarkan
+                </a>
+            </div>
         </div>
-        <div class="flex items-center gap-2.5 w-full sm:w-auto">
-            <!-- Speaker Toggle Button -->
-            <button 
-                type="button" 
-                onclick="toggleSpeaker()" 
-                class="w-full sm:w-auto flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg border font-bold transition shadow-sm cursor-pointer text-xs"
-                id="speaker-toggle-btn"
-            >
-                <svg id="speaker-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"></svg>
-                <span id="speaker-text">Suara</span>
-            </button>
 
-            <a href="{{ route('pesanan') }}" class="w-full sm:w-auto text-center px-3.5 py-1.5 bg-coffee-dark text-white rounded-lg hover:bg-coffee-medium transition">
-                Segarkan Manual (Refresh)
-            </a>
+        <!-- Active Orders Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @forelse($kitchenItems as $mejaId => $details)
+                @php $meja = $details->first()->mejaTemp; @endphp
+                <div class="bg-white rounded-2xl border border-coffee-latte shadow-md overflow-hidden coffee-card">
+                    <div class="bg-coffee-dark text-white p-4 flex justify-between items-center">
+                        <h3 class="font-bold text-sm">{{ $meja && $meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . ($meja ? $meja->nomor_meja : '?') }}</h3>
+                        <span class="text-[10px] bg-coffee-medium text-coffee-gold px-2 py-0.5 rounded font-extrabold uppercase">
+                            {{ $details->sum('jumlah') }} Item
+                        </span>
+                    </div>
+                    <div class="divide-y divide-coffee-latte p-4">
+                        @foreach($details as $item)
+                            <div class="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-sm text-coffee-dark">{{ $item->menu->nama_menu }}</span>
+                                        <span class="text-xs font-extrabold text-coffee-light">x{{ $item->jumlah }}</span>
+                                    </div>
+                                    @if($item->catatan)
+                                        <p class="text-[11px] bg-red-50 border border-red-100 text-red-700 px-2 py-1 rounded-lg inline-block font-semibold">
+                                            Catatan: {{ $item->catatan }}
+                                        </p>
+                                    @endif
+                                </div>
+                                <div>
+                                    @if($item->status === 'menunggu')
+                                        <form action="{{ route('pesanan.updateStatus', $item->id_detail) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="status" value="dimasak">
+                                            <button type="submit" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition shadow cursor-pointer">Masak</button>
+                                        </form>
+                                    @elseif($item->status === 'dimasak')
+                                        <form action="{{ route('pesanan.updateStatus', $item->id_detail) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="status" value="selesai">
+                                            <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow cursor-pointer">Selesai</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @empty
+                <div class="col-span-full text-center py-20 bg-white rounded-3xl border border-coffee-latte coffee-card">
+                    <h3 class="font-bold text-coffee-dark">Dapur Bersih!</h3>
+                    <p class="text-xs text-coffee-light font-medium mt-1">Tidak ada pesanan aktif saat ini.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 
-    <!-- Active Orders Grouped by Table -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        @forelse($kitchenItems as $mejaId => $details)
-            @php $meja = $details->first()->mejaTemp; @endphp
-            <div class="bg-white rounded-2xl border border-coffee-latte shadow-md overflow-hidden coffee-card">
-                <!-- Header of Table -->
-                <div class="bg-coffee-dark text-white p-4 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-bold text-sm">{{ $meja && $meja->nomor_meja == 99 ? 'Takeaway' : 'Meja ' . ($meja ? $meja->nomor_meja : '?') }}</h3>
-
-                    </div>
-                    <span class="text-[10px] bg-coffee-medium text-coffee-gold px-2 py-0.5 rounded font-extrabold uppercase">
-                        {{ $details->count() }} Item Masakan
-                    </span>
+    <!-- Stok Tab -->
+    <div x-show="activeTab === 'stok'" class="space-y-6" style="display: none;">
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+                <h3 class="font-extrabold text-coffee-dark">Manajemen Stok Menu</h3>
+                <div class="flex gap-3 w-full md:w-auto">
+                    <input 
+                        type="text" 
+                        x-model="searchQuery" 
+                        placeholder="Cari menu..." 
+                        class="w-full md:w-64 px-4 py-2 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50"
+                    >
+                    <select 
+                        x-model="selectedCategory"
+                        class="px-4 py-2 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50"
+                    >
+                        <option value="all">Semua</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id_kategori }}">{{ $cat->nama_kategori }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                
-                <!-- Items list -->
-                <div class="divide-y divide-coffee-latte p-4">
-                    @foreach($details as $item)
-                        <div class="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-sm text-coffee-dark">{{ $item->menu->nama_menu }}</span>
-                                    <span class="text-xs font-extrabold text-coffee-light">x{{ $item->jumlah }}</span>
+            </div>
 
-
-                                </div>
-                                @if($item->catatan)
-                                    <p class="text-[11px] bg-red-50 border border-red-100 text-red-700 px-2 py-1 rounded-lg inline-block font-semibold">
-                                        Catatan: {{ $item->catatan }}
-                                    </p>
-                                @endif
-                                <p class="text-[10px] text-coffee-light font-medium">Dipesan: {{ $item->created_at->diffForHumans() }}</p>
-                            </div>
-
-                            <!-- Actions based on status -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <template x-for="menu in filteredMenus()" :key="menu.id_menu">
+                    <div class="p-4 border border-coffee-latte rounded-2xl bg-white hover:border-coffee-light transition space-y-3">
+                        <div class="flex justify-between items-start gap-2">
                             <div>
-                                @if($item->status === 'menunggu')
-                                    <form action="{{ route('pesanan.updateStatus', $item->id_detail) }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="status" value="dimasak">
-                                        <button type="submit" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition shadow cursor-pointer">
-                                            Mulai Masak
-                                        </button>
-                                    </form>
-                                @elseif($item->status === 'dimasak')
-                                    <form action="{{ route('pesanan.updateStatus', $item->id_detail) }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="status" value="selesai">
-                                        <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow cursor-pointer">
-                                            Selesai
-                                        </button>
-                                    </form>
-                                @endif
+                                <h4 class="font-extrabold text-coffee-dark text-xs truncate max-w-[120px]" x-text="menu.nama_menu"></h4>
+                                <p class="text-[10px] text-coffee-light font-bold" x-text="menu.kategori.nama_kategori"></p>
                             </div>
+                            <span 
+                                :class="menu.status === 'tersedia' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'"
+                                class="text-[10px] px-2 py-0.5 rounded border font-bold uppercase" 
+                                x-text="menu.status"
+                            ></span>
                         </div>
-                    @endforeach
-                </div>
+                        
+                        <div class="flex items-center justify-between bg-coffee-cream/50 p-2 rounded-xl border border-coffee-latte">
+                            <button 
+                                @click="updateStok(menu.id_menu, 'minus')"
+                                class="w-8 h-8 flex items-center justify-center bg-white border border-coffee-latte rounded-lg text-coffee-dark hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition font-black cursor-pointer"
+                            >
+                                -
+                            </button>
+                            <div class="text-center">
+                                <span class="block text-[10px] text-coffee-light font-bold uppercase">Stok</span>
+                                <span class="text-sm font-black text-coffee-dark" x-text="menu.stok"></span>
+                            </div>
+                            <button 
+                                @click="updateStok(menu.id_menu, 'plus')"
+                                class="w-8 h-8 flex items-center justify-center bg-white border border-coffee-latte rounded-lg text-coffee-dark hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition font-black cursor-pointer"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+                </template>
             </div>
-        @empty
-            <div class="col-span-2 text-center py-20 bg-white rounded-3xl border border-coffee-latte coffee-card">
-                <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-coffee-medium mx-auto mb-4 border border-amber-100">
-                    <svg class="w-8 h-8 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012-2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                </div>
-                <h3 class="font-bold text-coffee-dark">Dapur Bersih!</h3>
-                <p class="text-xs text-coffee-light font-medium mt-1">Tidak ada hidangan yang menunggu atau sedang dimasak.</p>
-            </div>
-        @endforelse
+        </div>
     </div>
 
 </div>
@@ -138,12 +203,55 @@
 
 @section('scripts')
     <script>
+        function chefManager() {
+            return {
+                activeTab: 'antrean',
+                searchQuery: '',
+                selectedCategory: 'all',
+                menus: @json($menus),
+                
+                updateStok(menuId, action) {
+                    fetch(`/menu/update-stok/${menuId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ action: action })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const index = this.menus.findIndex(m => m.id_menu === menuId);
+                            if (index !== -1) {
+                                this.menus[index].stok = data.new_stok;
+                                this.menus[index].status = data.new_status;
+                            }
+                        }
+                    });
+                },
+                
+                filteredMenus() {
+                    return this.menus.filter(menu => {
+                        const matchesSearch = menu.nama_menu.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        const matchesCategory = this.selectedCategory === 'all' || menu.id_kategori == this.selectedCategory;
+                        return matchesSearch && matchesCategory;
+                    });
+                }
+            };
+        }
+
+        // Warm up speech synthesis voices list immediately
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+        }
+
         const activeOrders = @json($activeOrdersJson);
         const SPEAKER_STORAGE_KEY = 'chef_speaker_enabled';
         const SPOKEN_ITEMS_KEY = 'chef_spoken_items';
 
-        // Check if speaker is enabled (defaults to true for premium feel)
-        let speakerEnabled = localStorage.getItem(SPEAKER_STORAGE_KEY) !== 'false';
+        // Check if speaker is enabled (defaults to false for safety/as requested, but persists on refresh)
+        let speakerEnabled = localStorage.getItem(SPEAKER_STORAGE_KEY) === 'true';
 
         // Update speaker button UI
         function updateSpeakerUI() {
@@ -171,8 +279,12 @@
             localStorage.setItem(SPEAKER_STORAGE_KEY, speakerEnabled);
             updateSpeakerUI();
             if (speakerEnabled) {
+                // Speak confirmation first so user knows it works
+                speakIndonesian("Suara pemantau aktif");
                 // Speak active new orders immediately when toggled ON (only new ones)
-                speakNewOrders(false);
+                setTimeout(() => {
+                    speakNewOrders(false);
+                }, 1500);
             } else {
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
@@ -180,24 +292,43 @@
             }
         }
 
+        // Helper to find Indonesian voice robustly
+        function getIndonesianVoice() {
+            if (!('speechSynthesis' in window)) return null;
+            const voices = window.speechSynthesis.getVoices();
+            
+            // Priority list for Indonesian voices
+            const searchTerms = ['id-id', 'id_id', 'indonesia', 'bahasa', 'id', 'ms-my', 'ms_my', 'malay'];
+            
+            for (const term of searchTerms) {
+                const voice = voices.find(v => {
+                    const lang = v.lang.toLowerCase();
+                    const name = v.name.toLowerCase();
+                    return lang.includes(term) || name.includes(term);
+                });
+                if (voice) return voice;
+            }
+            return null;
+        }
+
         // Speak function
         function speakIndonesian(text) {
             if (!speakerEnabled) return;
+            
             if ('speechSynthesis' in window) {
-                // Cancel current speech if speaking
                 window.speechSynthesis.cancel();
-                
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'id-ID';
                 
-                const voices = window.speechSynthesis.getVoices();
-                const idVoice = voices.find(v => v.lang.includes('id-ID') || v.lang.includes('id_ID'));
+                const idVoice = getIndonesianVoice();
                 if (idVoice) {
                     utterance.voice = idVoice;
+                    utterance.lang = idVoice.lang;
+                } else {
+                    utterance.lang = 'id-ID';
                 }
                 
-                utterance.rate = 0.95;
-                utterance.pitch = 1;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -244,13 +375,23 @@
             
             // Speak new orders on page load
             if ('speechSynthesis' in window) {
-                if (window.speechSynthesis.getVoices().length > 0) {
+                // Try to speak immediately if the Indonesian voice is already loaded
+                if (getIndonesianVoice()) {
                     speakNewOrders();
                 } else {
+                    // Otherwise, wait for voiceschanged event
                     window.speechSynthesis.onvoiceschanged = function() {
                         speakNewOrders();
                         window.speechSynthesis.onvoiceschanged = null; // Unbind to run only once
                     };
+                    
+                    // Fallback: if voiceschanged doesn't fire or no voice is found after 1.5 seconds, speak anyway
+                    setTimeout(() => {
+                        if (window.speechSynthesis.onvoiceschanged) {
+                            speakNewOrders();
+                            window.speechSynthesis.onvoiceschanged = null;
+                        }
+                    }, 1500);
                 }
             }
         });

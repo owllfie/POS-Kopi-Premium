@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Meja;
 use App\Models\DetailPesanan;
+use App\Models\Menu;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 
@@ -36,14 +37,32 @@ class PesananController extends Controller
 
         if ($role === 'chef') {
             // Chef view: only pending/cooking detail lines, grouped by table
-            $kitchenItems = DetailPesanan::whereNull('id_pesanan')
+            $rawKitchenItems = DetailPesanan::whereNull('id_pesanan')
                 ->whereIn('status', ['menunggu', 'dimasak'])
                 ->with(['menu', 'mejaTemp'])
                 ->orderBy('created_at', 'asc')
-                ->get()
-                ->groupBy('id_meja_temp');
+                ->get();
 
-            return view('pesanan.chef', compact('kitchenItems'));
+            $kitchenItems = $rawKitchenItems->groupBy('id_meja_temp')->map(function($details) {
+                return $details->groupBy(function($item) {
+                    return $item->id_menu . '_' . $item->status . '_' . trim($item->catatan);
+                })->map(function($group) {
+                    $first = $group->first();
+                    $combined = clone $first;
+                    $combined->jumlah = $group->sum('jumlah');
+                    $combined->id_detail = $group->pluck('id_detail')->implode(',');
+                    return $combined;
+                });
+            });
+
+            $menus = Menu::with('kategori')->orderBy('nama_menu', 'asc')->get();
+            $categories = \App\Models\Kategori::all();
+
+            return view('pesanan.chef', compact('kitchenItems', 'menus', 'categories'));
+        }
+
+        if ($role === 'stock keeper') {
+            return redirect()->route('bahan-alat.index');
         }
 
         // For other roles, since Antrean Pesanan is removed, redirect to dashboard
@@ -54,9 +73,10 @@ class PesananController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $user = $this->getActiveUser();
-        $item = DetailPesanan::find($id);
+        $ids = explode(',', $id);
+        $items = DetailPesanan::whereIn('id_detail', $ids)->with('menu')->get();
 
-        if (!$item) {
+        if ($items->isEmpty()) {
             return back()->with('error', 'Item pesanan tidak ditemukan.');
         }
 
@@ -65,18 +85,21 @@ class PesananController extends Controller
             return back()->with('error', 'Status tidak valid.');
         }
 
-        $oldStatus = $item->status;
-        $item->status = $status;
-        $item->save();
+        foreach ($items as $item) {
+            $oldStatus = $item->status;
+            $item->status = $status;
+            $item->save();
 
-        // Log kitchen action
-        ActivityLog::create([
-            'id_user' => $user->id_user,
-            'aktivitas' => 'KITCHEN_STATUS_UPDATE',
-            'detail_aktivitas' => 'Chef updated detail ID ' . $item->id_detail . ' (' . $item->menu->nama_menu . ') status from ' . $oldStatus . ' to ' . $status,
-            'ip_address' => $request->ip(),
-        ]);
+            // Log kitchen action
+            ActivityLog::create([
+                'id_user' => $user ? $user->id_user : null,
+                'aktivitas' => 'KITCHEN_STATUS_UPDATE',
+                'detail_aktivitas' => 'Chef updated detail ID ' . $item->id_detail . ' (' . $item->menu->nama_menu . ') status from ' . $oldStatus . ' to ' . $status,
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
-        return back()->with('success', 'Status menu ' . $item->menu->nama_menu . ' berhasil diperbarui.');
+        $menuNames = $items->pluck('menu.nama_menu')->unique()->implode(', ');
+        return back()->with('success', 'Status menu ' . $menuNames . ' berhasil diperbarui.');
     }
 }

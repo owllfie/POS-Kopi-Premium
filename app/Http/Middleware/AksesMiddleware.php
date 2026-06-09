@@ -63,6 +63,9 @@ class AksesMiddleware
             if ($user->role->role === 'kasir' || $user->role->role === 'chef') {
                 return redirect()->route('pesanan');
             }
+            if ($user->role->role === 'stock keeper') {
+                return redirect()->route('bahan-alat.index');
+            }
             $module = 'dashboard';
         } elseif ($request->is('pesanan/*/bayar') || $request->is('pesanan/bayar/*')) {
             $module = 'bayar';

@@ -69,6 +69,7 @@ Route::prefix('menu')->name('menu.')->group(function () {
     Route::post('/restore/{id}', [MenuManageController::class, 'restore'])->name('restore');
     Route::post('/force-delete/{id}', [MenuManageController::class, 'forceDelete'])->name('forceDelete');
     Route::post('/toggle-status/{id}', [MenuManageController::class, 'toggleStatus'])->name('toggleStatus');
+    Route::post('/update-stok/{id}', [MenuManageController::class, 'updateStok'])->name('updateStok');
 });
 
 Route::prefix('kategori')->name('kategori.')->group(function () {
@@ -154,6 +155,7 @@ Route::prefix('bahan-alat')->name('bahan-alat.')->group(function () {
     Route::post('/delete/{id}', [\App\Http\Controllers\BahanAlatController::class, 'delete'])->name('delete');
     Route::post('/restore/{id}', [\App\Http\Controllers\BahanAlatController::class, 'restore'])->name('restore');
     Route::post('/force-delete/{id}', [\App\Http\Controllers\BahanAlatController::class, 'forceDelete'])->name('force-delete');
+    Route::post('/update-stok/{id}', [\App\Http\Controllers\BahanAlatController::class, 'updateStok'])->name('updateStok');
 });
 
 Route::prefix('properti')->name('properti.')->group(function () {

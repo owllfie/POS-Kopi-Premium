@@ -13,7 +13,6 @@
     <!-- Cropper.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    @yield('styles')
     @php
         // Resolve the active simulated user
         $simUser = null;
@@ -46,9 +45,12 @@
     @endphp
 </head>
 <body class="bg-coffee-cream font-sans min-h-screen text-coffee-text antialiased" x-data="{ sidebarOpen: {{ in_array($roleName, ['kasir', 'chef']) ? 'false' : 'true' }} }">
+    <div id="page-styles" style="display: none;">
+        @yield('styles')
+    </div>
 
     <!-- Main Wrapper -->
-    <div class="flex min-h-[calc(100vh-28px)] relative overflow-hidden">
+    <div class="flex min-h-screen relative overflow-hidden">
         
         @if(!in_array($roleName, ['kasir', 'chef']))
         <!-- Sidebar -->
@@ -71,7 +73,7 @@
             </div>
 
             <!-- Sidebar Navigation Links -->
-            <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
+            <nav id="sidebar-nav" class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
                 @foreach ($sidebarItems as $item)
                     @if ($simUser && $simUser->canAccess($item['module']))
                         @php
@@ -134,7 +136,7 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     @endif
-                    <h1 class="text-xl font-bold text-coffee-dark">@yield('page_title', 'Halaman Utama')</h1>
+                    <h1 id="page-title" class="text-xl font-bold text-coffee-dark">@yield('page_title', 'Halaman Utama')</h1>
                 </div>
                 <div class="flex items-center gap-6">
                     <div id="live-clock" class="font-medium text-xs tracking-wide text-coffee-medium hidden md:block"></div>
@@ -165,7 +167,7 @@
                 </div>
             </header>
 
-            <main class="flex-grow p-6 overflow-y-auto">
+            <main class="flex-grow {{ $roleName === 'kasir' ? 'p-2' : 'p-6' }} overflow-y-auto">
                 @if(session('success'))
                     <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-3 text-sm font-medium shadow-sm animate-fade-in">
                         <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -340,6 +342,8 @@
         }
     </script>
 
-    @yield('scripts')
+    <div id="page-scripts" style="display: none;">
+        @yield('scripts')
+    </div>
 </body>
 </html>

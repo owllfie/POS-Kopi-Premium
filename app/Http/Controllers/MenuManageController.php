@@ -219,6 +219,45 @@ class MenuManageController extends Controller
         return back()->with('success', 'Status menu ' . $menu->nama_menu . ' diperbarui.');
     }
 
+    public function updateStok(Request $request, $id)
+    {
+        $admin = $this->getActiveUser();
+        $menu = Menu::findOrFail($id);
+        $action = $request->input('action'); // 'plus' or 'minus'
+        
+        $oldStok = $menu->stok;
+        if ($action === 'plus') {
+            $menu->stok += 1;
+        } elseif ($action === 'minus') {
+            if ($menu->stok > 0) {
+                $menu->stok -= 1;
+            }
+        }
+
+        // Auto update status based on stock
+        if ($menu->stok <= 0) {
+            $menu->status = 'habis';
+        } else if ($menu->stok > 0 && $menu->status === 'habis') {
+            $menu->status = 'tersedia';
+        }
+        
+        $menu->save();
+
+        ActivityLog::create([
+            'id_user' => $admin ? $admin->id_user : null,
+            'aktivitas' => 'UPDATE_MENU_STOK',
+            'detail_aktivitas' => "Updated stock of menu {$menu->nama_menu} from {$oldStok} to {$menu->stok}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'new_stok' => $menu->stok,
+            'new_status' => $menu->status,
+            'nama_menu' => $menu->nama_menu
+        ]);
+    }
+
     public function delete(Request $request, $id)
     {
         $admin = $this->getActiveUser();

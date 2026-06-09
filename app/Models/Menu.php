@@ -20,6 +20,7 @@ class Menu extends Model
         'foto',
         'harga',
         'status',
+        'stok',
         'paket_makanan',
         'paket_minuman',
         'paket_addons',

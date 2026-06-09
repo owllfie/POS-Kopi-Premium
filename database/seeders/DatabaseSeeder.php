@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             ['id_role' => 3, 'role' => 'manager'],
             ['id_role' => 4, 'role' => 'kasir'],
             ['id_role' => 5, 'role' => 'chef'],
+            ['id_role' => 6, 'role' => 'stock keeper'],
         ];
         foreach ($roles as $r) {
             Role::create($r);
@@ -71,6 +72,13 @@ class DatabaseSeeder extends Seeder
                 'email' => 'chef@pos.com',
                 'password' => 'password',
                 'id_role' => 5,
+            ],
+            [
+                'id_user' => 6,
+                'username' => 'stockkeeper',
+                'email' => 'stockkeeper@pos.com',
+                'password' => 'password',
+                'id_role' => 6,
             ],
         ];
         foreach ($users as $u) {
@@ -123,6 +131,13 @@ class DatabaseSeeder extends Seeder
         foreach ($modules as $mod) {
             $allowed = in_array($mod, $chefAllowed) ? '1' : '0';
             Aksess::create(['id_role' => 5, 'modul' => $mod, 'allowed' => $allowed]);
+        }
+
+        // Stock Keeper gets bahan_alat and properti only
+        $stockKeeperAllowed = ['bahan_alat', 'properti'];
+        foreach ($modules as $mod) {
+            $allowed = in_array($mod, $stockKeeperAllowed) ? '1' : '0';
+            Aksess::create(['id_role' => 6, 'modul' => $mod, 'allowed' => $allowed]);
         }
 
         // 4. Categories
