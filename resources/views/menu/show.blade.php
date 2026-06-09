@@ -19,6 +19,12 @@
     <title>Menu Digital - Meja {{ $meja->nomor_meja }} - {{ $webSettings['nama_restoran'] }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- MediaPipe & Camera SDK for Hand Tracking -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-coffee-cream font-sans min-h-screen text-coffee-text antialiased" x-data="menuCart()">
@@ -503,22 +509,116 @@
                         </div>
 
                         <!-- Footer Action (Aligned at bottom of right column) -->
-                        <div class="border-t border-coffee-latte pt-4 mt-4 flex items-center justify-between gap-4">
-                            <template x-if="selectedMenu.isHabis">
-                                <span class="w-full text-center py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl font-bold text-xs uppercase tracking-wider">Menu Habis</span>
-                            </template>
+                        <div class="border-t border-coffee-latte pt-4 mt-4 space-y-4">
                             <template x-if="!selectedMenu.isHabis">
-                                <button 
-                                    @click="addToCart(selectedMenu.id, selectedMenu.name, selectedMenu.price); menuDetailModal = false" 
-                                    class="w-full py-3 bg-coffee-dark hover:bg-coffee-medium text-white rounded-xl font-bold transition text-xs cursor-pointer shadow-md hover:shadow-lg transform active:scale-[0.98] flex items-center justify-center gap-2"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                                    Tambah ke Keranjang
-                                </button>
+                                <!-- Qty Selector in Menu Detail Modal -->
+                                <div class="flex items-center justify-between bg-coffee-cream/30 border border-coffee-latte/50 rounded-2xl p-3 shadow-sm">
+                                    <span class="text-xs font-bold text-coffee-medium uppercase tracking-wider">Jumlah Pesanan</span>
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex items-center border border-coffee-latte rounded-xl bg-white overflow-hidden">
+                                            <button type="button" @click="if(detailQty > 1) detailQty--" class="px-3 py-1.5 text-sm font-extrabold hover:bg-coffee-cream transition select-none">-</button>
+                                            <span class="px-4 text-sm font-extrabold text-coffee-dark" x-text="detailQty"></span>
+                                            <button type="button" @click="if(detailQty < 20) detailQty++" class="px-3 py-1.5 text-sm font-extrabold hover:bg-coffee-cream transition select-none">+</button>
+                                        </div>
+                                        
+                                        <button 
+                                            type="button"
+                                            @click="startHandTracking()"
+                                            class="px-3 py-1.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                                        >
+                                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+                                            <span>Jari Tangan (AI)</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </template>
+
+                            <div class="flex items-center justify-between gap-4">
+                                <template x-if="selectedMenu.isHabis">
+                                    <span class="w-full text-center py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl font-bold text-xs uppercase tracking-wider">Menu Habis</span>
+                                </template>
+                                <template x-if="!selectedMenu.isHabis">
+                                    <button 
+                                        @click="addToCartFromDetail()" 
+                                        class="w-full py-3 bg-coffee-dark hover:bg-coffee-medium text-white rounded-xl font-bold transition text-xs cursor-pointer shadow-md hover:shadow-lg transform active:scale-[0.98] flex items-center justify-center gap-2"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                        Tambah ke Keranjang
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Hand Tracking Modal -->
+    <template x-teleport="body">
+        <div 
+            class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center p-4"
+            x-show="handTrackingModal"
+            x-transition
+            style="display: none;"
+        >
+            <div class="bg-white rounded-3xl overflow-hidden shadow-2xl max-w-xl w-full flex flex-col max-h-[95vh] coffee-card border border-coffee-latte relative">
+                <!-- Close / Back Button -->
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-extrabold text-coffee-dark text-base">Atur Jumlah dengan Jari</h3>
+                        <p class="text-xs text-coffee-light font-medium mt-1">Angkat jari tangan Anda (1-5) di depan kamera.</p>
+                    </div>
+                    <button @click="stopHandTracking()" class="text-coffee-medium hover:text-coffee-dark font-extrabold text-xs p-1.5 hover:bg-coffee-cream rounded-lg transition cursor-pointer">
+                        Tutup
+                    </button>
+                </div>
+                
+                <!-- Video/Canvas Area -->
+                <div class="relative bg-slate-950 flex items-center justify-center overflow-hidden aspect-video">
+                    <!-- Invisible webcam video -->
+                    <video id="hand-webcam" autoplay playsinline class="hidden"></video>
+                    
+                    <!-- Mirrored Output Canvas -->
+                    <canvas id="hand-canvas" width="640" height="480" class="w-full h-full object-cover transform scale-x-[-1]"></canvas>
+
+                    <!-- Camera Loading Overlay -->
+                    <div x-show="isCameraLoading" class="absolute inset-0 bg-coffee-dark/90 flex flex-col items-center justify-center gap-3 text-white">
+                        <svg class="animate-spin h-8 w-8 text-coffee-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-xs font-bold text-coffee-gold uppercase tracking-wider">Menyalakan Kamera AI...</span>
+                    </div>
+
+                    <!-- Camera Error Overlay -->
+                    <div x-show="hasCameraError" class="absolute inset-0 bg-coffee-dark/90 flex flex-col items-center justify-center p-6 text-center gap-3 text-white">
+                        <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span class="text-sm font-bold text-red-400">Gagal Mengakses Kamera</span>
+                        <p class="text-xs text-coffee-light max-w-sm">Pastikan Anda telah memberikan izin akses kamera pada browser Anda.</p>
+                    </div>
+                </div>
+
+                <!-- Info and Confirm Button -->
+                <div class="p-6 bg-coffee-cream/40 border-t border-slate-100 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-coffee-dark rounded-2xl flex items-center justify-center text-coffee-gold border border-coffee-light/20 shadow-inner">
+                            <span class="text-2xl font-black" x-text="detectedFingers">0</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase font-bold text-coffee-medium tracking-wider block">Jumlah Terdeteksi</span>
+                            <span class="text-xs font-bold text-coffee-dark" x-text="detectedFingers > 0 ? `${detectedFingers} Porsi` : 'Menunggu jari tangan...'"></span>
                         </div>
                     </div>
 
+                    <button 
+                        type="button" 
+                        @click="useHandCount()"
+                        :disabled="detectedFingers === 0"
+                        class="px-8 py-3 bg-coffee-dark text-white rounded-xl font-bold hover:bg-coffee-medium transition shadow-lg text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Gunakan Jumlah Ini
+                    </button>
                 </div>
             </div>
         </div>
@@ -547,9 +647,19 @@
                 cartItems: {},
                 recordingItemId: null,
                 recognition: null,
+                detailQty: 1,
+                
+                // Hand Tracking States
+                handTrackingModal: false,
+                detectedFingers: 0,
+                isCameraLoading: false,
+                hasCameraError: false,
+                handsDetector: null,
+                cameraInstance: null,
                 
                 openMenuDetail(item) {
                     this.selectedMenu = item;
+                    this.detailQty = 1; // Reset to 1
                     this.menuDetailModal = true;
                 },
                 
@@ -564,6 +674,25 @@
                             note: ''
                         };
                     }
+                },
+
+                addToCartFromDetail() {
+                    const id = this.selectedMenu.id;
+                    const name = this.selectedMenu.name;
+                    const price = this.selectedMenu.price;
+                    const qty = this.detailQty;
+
+                    if (this.cartItems[id]) {
+                        this.cartItems[id].qty += qty;
+                    } else {
+                        this.cartItems[id] = {
+                            name: name,
+                            price: price,
+                            qty: qty,
+                            note: ''
+                        };
+                    }
+                    this.menuDetailModal = false;
                 },
                 
                 changeQty(id, delta) {
@@ -627,6 +756,113 @@
                     };
 
                     this.recognition.start();
+                },
+
+                // Hand Tracking Logic
+                startHandTracking() {
+                    this.handTrackingModal = true;
+                    this.isCameraLoading = true;
+                    this.hasCameraError = false;
+                    this.detectedFingers = 0;
+
+                    this.$nextTick(() => {
+                        const videoElement = document.getElementById('hand-webcam');
+                        const canvasElement = document.getElementById('hand-canvas');
+                        const canvasCtx = canvasElement.getContext('2d');
+
+                        if (!videoElement || !canvasElement) return;
+
+                        if (!this.handsDetector) {
+                            this.handsDetector = new Hands({
+                                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                            });
+
+                            this.handsDetector.setOptions({
+                                maxNumHands: 1,
+                                modelComplexity: 1,
+                                minDetectionConfidence: 0.6,
+                                minTrackingConfidence: 0.6
+                            });
+
+                            this.handsDetector.onResults((results) => {
+                                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                                canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+                                let totalFingersUp = 0;
+
+                                if (results.multiHandLandmarks && results.multiHandIndices) {
+                                    for (let index = 0; index < results.multiHandLandmarks.length; index++) {
+                                        const landmarks = results.multiHandLandmarks[index];
+                                        
+                                        // Draw connectors & landmarks
+                                        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00e676', lineWidth: 4});
+                                        drawLandmarks(canvasCtx, landmarks, {color: '#ff3d00', lineWidth: 1, radius: 3});
+
+                                        const fingerTips = [8, 12, 16, 20];
+                                        fingerTips.forEach(tipId => {
+                                            if (landmarks[tipId].y < landmarks[tipId - 2].y) {
+                                                totalFingersUp++;
+                                            }
+                                        });
+
+                                        const isLeftHand = results.multiHandedness[index].label === 'Left';
+                                        if (isLeftHand) {
+                                            if (landmarks[4].x > landmarks[3].x) totalFingersUp++;
+                                        } else {
+                                            if (landmarks[4].x < landmarks[3].x) totalFingersUp++;
+                                        }
+                                    }
+                                }
+                                
+                                this.detectedFingers = totalFingersUp;
+                            });
+                        }
+
+                        this.cameraInstance = new Camera(videoElement, {
+                            onFrame: async () => {
+                                if (this.handTrackingModal) {
+                                    await this.handsDetector.send({image: videoElement});
+                                    this.isCameraLoading = false;
+                                }
+                            },
+                            width: 640,
+                            height: 480
+                        });
+
+                        this.cameraInstance.start()
+                            .catch(err => {
+                                console.error("Camera start failed", err);
+                                this.isCameraLoading = false;
+                                this.hasCameraError = true;
+                            });
+                    });
+                },
+
+                stopHandTracking() {
+                    this.handTrackingModal = false;
+                    if (this.cameraInstance) {
+                        try {
+                            this.cameraInstance.stop();
+                        } catch (e) {
+                            console.warn("Error stopping camera helper:", e);
+                        }
+                        this.cameraInstance = null;
+                    }
+                    // Release webcam stream manually
+                    const videoElement = document.getElementById('hand-webcam');
+                    if (videoElement && videoElement.srcObject) {
+                        const stream = videoElement.srcObject;
+                        const tracks = stream.getTracks();
+                        tracks.forEach(track => track.stop());
+                        videoElement.srcObject = null;
+                    }
+                },
+
+                useHandCount() {
+                    if (this.detectedFingers > 0) {
+                        this.detailQty = this.detectedFingers;
+                    }
+                    this.stopHandTracking();
                 }
             }
         }

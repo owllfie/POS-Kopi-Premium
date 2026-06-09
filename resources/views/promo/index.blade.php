@@ -36,7 +36,6 @@
                     <thead>
                         <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
                             <th class="pb-3">Nama Promo</th>
-                            <th class="pb-3">Tipe</th>
                             <th class="pb-3">Potongan</th>
                             <th class="pb-3">Periode</th>
                             <th class="pb-3">Status</th>
@@ -62,17 +61,8 @@
                                     @endif
                                 </td>
                                 <td class="py-3.5">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider bg-slate-50 border-slate-200 text-slate-700">
-                                        {{ $p->tipe_promo }}
-                                    </span>
-                                </td>
-                                <td class="py-3.5">
                                     <span class="font-bold text-coffee-dark">
-                                        @if($p->tipe_potongan === 'persen')
-                                            {{ $p->nominal_potongan }}%
-                                        @else
-                                            Rp {{ number_format($p->nominal_potongan, 0, ',', '.') }}
-                                        @endif
+                                        Rp {{ number_format($p->nominal_potongan, 0, ',', '.') }}
                                     </span>
                                 </td>
                                 <td class="py-3.5 text-xs">
@@ -117,7 +107,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-8 text-center text-coffee-light font-medium">Tidak ada data promo.</td>
+                                <td colspan="5" class="py-8 text-center text-coffee-light font-medium">Tidak ada data promo.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -235,16 +225,8 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="tipe_potongan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Tipe Potongan</label>
-                            <select name="tipe_potongan" id="tipe_potongan" required class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                                <option value="nominal">Nominal (Rupiah)</option>
-                                <option value="persen">Persentase (%)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="nominal_potongan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Besar Potongan</label>
-                            <input type="number" name="nominal_potongan" id="nominal_potongan" required min="0" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white" placeholder="Contoh: 10000 atau 10">
+                            <label for="nominal_potongan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Besar Potongan (Rp)</label>
+                            <input type="number" name="nominal_potongan" id="nominal_potongan" required min="0" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white" placeholder="Contoh: 10000">
                         </div>
                     </div>
 
@@ -348,15 +330,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="edit_tipe_potongan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Tipe Potongan</label>
-                            <select name="tipe_potongan" id="edit_tipe_potongan" x-model="editPromo.tipe_potongan" required class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                                <option value="nominal">Nominal (Rupiah)</option>
-                                <option value="persen">Persentase (%)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="edit_nominal_potongan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Besar Potongan</label>
+                            <label for="edit_nominal_potongan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Besar Potongan (Rp)</label>
                             <input type="number" name="nominal_potongan" id="edit_nominal_potongan" x-model="editPromo.nominal_potongan" required min="0" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
                         </div>
                     </div>

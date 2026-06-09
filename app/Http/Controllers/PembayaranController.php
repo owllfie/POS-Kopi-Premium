@@ -193,11 +193,7 @@ class PembayaranController extends Controller
                     $eligibleSubtotal = $pendingItems->whereIn('id_menu', $promo->menu_ids)->sum('subtotal');
                 }
 
-                if ($promo->tipe_potongan === 'persen') {
-                    $discount = round(($eligibleSubtotal * $promo->nominal_potongan) / 100);
-                } else {
-                    $discount = $promo->nominal_potongan;
-                }
+                $discount = $promo->nominal_potongan;
                 if ($discount > $eligibleSubtotal) {
                     $discount = $eligibleSubtotal;
                 }
@@ -321,11 +317,7 @@ class PembayaranController extends Controller
                         $eligibleSubtotal = $pendingItems->whereIn('id_menu', $promo->menu_ids)->sum('subtotal');
                     }
 
-                    if ($promo->tipe_potongan === 'persen') {
-                        $discount = round(($eligibleSubtotal * $promo->nominal_potongan) / 100);
-                    } else {
-                        $discount = $promo->nominal_potongan;
-                    }
+                    $discount = $promo->nominal_potongan;
                     if ($discount > $eligibleSubtotal) {
                         $discount = $eligibleSubtotal;
                     }

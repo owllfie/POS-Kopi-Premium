@@ -51,7 +51,6 @@ class PromoController extends Controller
             'end_time' => 'nullable|date',
             'status' => 'required|in:Aktif,Tidak Aktif',
             'nominal_potongan' => 'required|integer|min:0',
-            'tipe_potongan' => 'required|in:persen,nominal',
             'menu_ids' => 'nullable|array',
             'menu_ids.*' => 'integer|exists:menu,id_menu',
         ]);
@@ -73,7 +72,6 @@ class PromoController extends Controller
             'end_time' => 'nullable|date',
             'status' => 'required|in:Aktif,Tidak Aktif',
             'nominal_potongan' => 'required|integer|min:0',
-            'tipe_potongan' => 'required|in:persen,nominal',
             'menu_ids' => 'nullable|array',
             'menu_ids.*' => 'integer|exists:menu,id_menu',
         ]);

@@ -89,11 +89,22 @@
                                                 -
                                             </button>
                                         @endif
-                                        <div class="text-center min-w-[50px]">
-                                            <span class="text-sm font-black text-coffee-dark" id="stok-val-{{ $item->id_item }}">
-                                                {{ number_format($item->stok, 0, ',', '.') }}
-                                            </span>
-                                            <span class="text-[10px] font-bold text-coffee-light block -mt-1">{{ $item->satuan }}</span>
+                                        <div class="text-center min-w-[60px]">
+                                            @if($tab === 'active')
+                                                <input 
+                                                    type="number" 
+                                                    value="{{ $item->stok }}" 
+                                                    id="stok-val-{{ $item->id_item }}"
+                                                    @change="updateStokManual({{ $item->id_item }}, $event.target.value)"
+                                                    class="w-16 px-1 py-0.5 text-center text-sm font-black text-coffee-dark bg-transparent border border-transparent rounded focus:outline-none focus:bg-white focus:border-coffee-light focus:ring-1 focus:ring-coffee-light/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    min="0"
+                                                >
+                                            @else
+                                                <span class="text-sm font-black text-coffee-dark" id="stok-val-{{ $item->id_item }}">
+                                                    {{ number_format($item->stok, 0, ',', '.') }}
+                                                </span>
+                                            @endif
+                                            <span class="text-[10px] font-bold text-coffee-light block -mt-0.5">{{ $item->satuan }}</span>
                                         </div>
                                         @if($tab === 'active')
                                             <button 
@@ -439,12 +450,46 @@
                     if (data.status === 'success') {
                         const valEl = document.getElementById(`stok-val-${itemId}`);
                         if (valEl) {
-                            valEl.textContent = data.new_stok.toLocaleString('id-ID');
+                            if (valEl.tagName === 'INPUT') {
+                                valEl.value = data.new_stok;
+                            } else {
+                                valEl.textContent = data.new_stok.toLocaleString('id-ID');
+                            }
                         }
                     }
                 })
                 .catch(err => {
                     console.error('Error updating stock:', err);
+                });
+            },
+
+            updateStokManual(itemId, newValue) {
+                if (newValue < 0 || isNaN(newValue) || newValue === '') {
+                    newValue = 0;
+                }
+                fetch(`/bahan-alat/update-stok/${itemId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ stok: newValue })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const valEl = document.getElementById(`stok-val-${itemId}`);
+                        if (valEl) {
+                            if (valEl.tagName === 'INPUT') {
+                                valEl.value = data.new_stok;
+                            } else {
+                                valEl.textContent = data.new_stok.toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Error updating stock manually:', err);
                 });
             }
         }

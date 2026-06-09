@@ -36,7 +36,7 @@ class PropertiController extends Controller
             $query->where('kategori', $kategori);
         }
 
-        $items = $query->orderBy('nama_item', 'asc')->paginate(9)->withQueryString();
+        $items = $query->orderBy('nama_item', 'asc')->paginate(15)->withQueryString();
 
         // Get unique categories for properties and tools
         $categories = BahanAlat::whereIn('tipe', ['properti', 'alat'])

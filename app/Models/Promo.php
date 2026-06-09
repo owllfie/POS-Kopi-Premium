@@ -21,7 +21,6 @@ class Promo extends Model
         'end_time',
         'status',
         'nominal_potongan',
-        'tipe_potongan',
         'menu_ids',
     ];
 

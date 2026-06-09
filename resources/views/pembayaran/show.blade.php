@@ -3,11 +3,7 @@
 @section('title', 'Proses Pembayaran')
 @section('page_title', 'Proses Pembayaran')
 
-@section('styles')
-<script type="text/javascript"
-        src="https://app.sandbox.midtrans.com/snap/snap.js"
-        data-client-key="{{ config('midtrans.client_key') }}"></script>
-@endsection
+
 
 @section('content')
 @php
@@ -266,7 +262,7 @@
 
                             <div class="bg-amber-50 rounded-lg p-3 border border-amber-100 flex items-center justify-between">
                                 <span class="text-[10px] font-black text-coffee-medium uppercase">Kembali</span>
-                                <strong class="text-sm font-black" :class="change >= 0 ? 'text-emerald-700' : 'text-rose-600'" x-text="formatRupiah(change)"></strong>
+                                <strong class="text-sm font-black" :class="kembalian >= 0 ? 'text-emerald-700' : 'text-rose-600'" x-text="formatRupiah(kembalian)"></strong>
                             </div>
                         </div>
 
@@ -283,8 +279,8 @@
                             type="button"
                             @click="confirmPayment"
                             class="w-full py-3 bg-coffee-dark text-white rounded-lg font-black text-xs uppercase hover:bg-coffee-medium transition shadow-md flex items-center justify-center space-x-2"
-                            :disabled="(method === 'cash' && change < 0) || loading || subtotal === 0"
-                            :class="((method === 'cash' && change < 0) || loading || subtotal === 0) ? 'opacity-50 cursor-not-allowed' : ''"
+                            :disabled="(method === 'cash' && kembalian < 0) || loading || subtotal === 0"
+                            :class="((method === 'cash' && kembalian < 0) || loading || subtotal === 0) ? 'opacity-50 cursor-not-allowed' : ''"
                         >
                             <span x-text="loading ? 'Proses...' : 'Bayar Lunas'"></span>
                         </button>
@@ -294,7 +290,6 @@
                     </div>
                 </form>
             </div>
-        </div>
 
         <!-- Second Confirmation Modal -->
         <template x-teleport="body">
@@ -341,7 +336,7 @@
                                 </div>
                                 <div class="flex justify-between font-bold text-emerald-800">
                                     <span>Uang Kembalian:</span>
-                                    <span x-text="formatRupiah(change)"></span>
+                                    <span x-text="formatRupiah(kembalian)"></span>
                                 </div>
                             </div>
                         </template>
@@ -366,6 +361,7 @@
                 </div>
             </div>
         </template>
+        </div>
 
         <!-- Close Shift Modal -->
         @if($isKasir && $activeShift)
@@ -458,6 +454,9 @@
 @endsection
 
 @section('scripts')
+<script type="text/javascript"
+        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
     function paymentProcessor(subtotal, pajakPersen, promos, items, mejaId) {
         return {
@@ -470,8 +469,8 @@
             discount: 0,
             tax: 0,
             total: 0,
-            nominal: {{ $totalBayar }},
-            change: 0,
+            nominal: 0,
+            kembalian: 0,
             mejaId: mejaId,
             loading: false,
             showConfirmModal: false,
@@ -492,11 +491,7 @@
                             .reduce((sum, item) => sum + Number(item.subtotal), 0);
                     }
 
-                    if (promo.tipe_potongan === 'persen') {
-                        this.discount = Math.round((eligibleSubtotal * promo.nominal_potongan) / 100);
-                    } else {
-                        this.discount = promo.nominal_potongan;
-                    }
+                    this.discount = Number(promo.nominal_potongan);
                     if (this.discount > eligibleSubtotal) {
                         this.discount = eligibleSubtotal;
                     }
@@ -505,7 +500,7 @@
                 }
                 
                 let taxableAmount = this.subtotal - this.discount;
-                this.tax = Math.round((taxableAmount * this.pajakPersen) / 100);
+                this.tax = Math.round((taxableAmount * Number(this.pajakPersen)) / 100);
                 this.total = taxableAmount + this.tax;
                 
                 this.calculateChange();
@@ -517,10 +512,11 @@
             },
             
             calculateChange() {
-                if (this.nominal === '') {
-                    this.change = -this.total;
+                let nominalVal = Number(this.nominal);
+                if (isNaN(nominalVal) || this.nominal === '') {
+                    this.kembalian = -this.total;
                 } else {
-                    this.change = this.nominal - this.total;
+                    this.kembalian = nominalVal - this.total;
                 }
             },
             
@@ -532,7 +528,7 @@
             },
 
             confirmPayment() {
-                if (this.method === 'cash' && this.change < 0) return;
+                if (this.method === 'cash' && this.kembalian < 0) return;
                 if (this.subtotal === 0) return;
                 this.showConfirmModal = true;
             },
@@ -540,7 +536,7 @@
             async executePayment() {
                 this.showConfirmModal = false;
                 if (this.method === 'cash') {
-                    if (this.change < 0) return;
+                    if (this.kembalian < 0) return;
                     this.loading = true;
                     document.getElementById('payment-form').submit();
                     return;
@@ -565,6 +561,11 @@
                         const data = await response.json();
                         
                         if (data.status === 'success') {
+                            if (typeof snap === 'undefined') {
+                                alert("Midtrans Snap SDK tidak berhasil dimuat. Periksa koneksi internet Anda atau konfigurasi server.");
+                                this.loading = false;
+                                return;
+                            }
                             snap.pay(data.snap_token, {
                                 onSuccess: (result) => {
                                     this.finalizeMidtrans(data.order_id);

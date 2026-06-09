@@ -161,16 +161,7 @@ async function loadPage(url, pushToHistory = true, clickedLink = null) {
             return;
         }
 
-        // Pause AlpineJS mutation observing and destroy old trees to prevent ReferenceErrors and memory leaks during DOM swap
-        if (window.Alpine) {
-            try {
-                window.Alpine.stopObservingMutations();
-                if (mainEl) window.Alpine.destroyTree(mainEl);
-                if (sidebarNavEl) window.Alpine.destroyTree(sidebarNavEl);
-            } catch (e) {
-                console.warn('[SPA Router] Failed to clean up Alpine tree:', e);
-            }
-        }
+
 
         // Update URL and browser history
         if (pushToHistory) {
@@ -236,36 +227,42 @@ async function loadPage(url, pushToHistory = true, clickedLink = null) {
             }
         };
 
-        // Update and execute scripts
-        if (pageScriptsEl && newPageScripts) {
-            pageScriptsEl.innerHTML = newPageScripts.innerHTML;
-            const scripts = pageScriptsEl.querySelectorAll('script');
+        // Helper to execute scripts inside a container
+        const executeScripts = (container) => {
+            if (!container) return;
+            const scripts = container.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
                 // Copy all attributes
                 Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
                 // Copy inner JS content
                 newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                // Execute by appending to body and immediately removing
-                document.body.appendChild(newScript);
-                newScript.remove();
+                // Replace old script with new script in-place to trigger execution
+                if (oldScript.parentNode) {
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                } else {
+                    document.body.appendChild(newScript);
+                    newScript.remove();
+                }
             });
+        };
+
+        // Update and execute scripts
+        if (pageScriptsEl && newPageScripts) {
+            pageScriptsEl.innerHTML = newPageScripts.innerHTML;
+            executeScripts(pageScriptsEl);
+        }
+
+        // Also search and execute any script tags inside mainEl (e.g. inline scripts in page views)
+        if (mainEl) {
+            executeScripts(mainEl);
         }
 
         // Restore original event listeners
         document.addEventListener = originalDocAddEventListener;
         window.addEventListener = originalWinAddEventListener;
 
-        // Resume AlpineJS mutation observing and re-initialize components
-        if (window.Alpine) {
-            try {
-                window.Alpine.startObservingMutations();
-                if (mainEl) window.Alpine.initTree(mainEl);
-                if (sidebarNavEl) window.Alpine.initTree(sidebarNavEl);
-            } catch (e) {
-                console.error('[SPA Router] Failed to initialize Alpine tree:', e);
-            }
-        }
+
 
         // Re-run LazyLoader scan
         if (window.LazyLoad) {

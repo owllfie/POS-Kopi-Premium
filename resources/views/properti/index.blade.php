@@ -46,83 +46,94 @@
             </form>
         </div>
 
-        <!-- Properti Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @forelse($items as $item)
-                <div class="bg-white rounded-2xl border border-coffee-latte p-5 flex flex-col justify-between coffee-card relative overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-                    <!-- Top Badge Row -->
-                    <div class="flex items-center justify-between gap-2 border-b border-coffee-latte/50 pb-3 mb-3">
-                        <span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide border 
-                            {{ $item->tipe === 'properti' ? 'bg-amber-50 border-amber-200 text-coffee-light' : 'bg-blue-50 border-blue-200 text-blue-800' }}">
-                            {{ $item->tipe === 'properti' ? 'Properti / Biaya' : 'Peralatan / Aset' }}
-                        </span>
-                        <span class="text-[10px] text-coffee-light font-bold uppercase tracking-wider">{{ $item->kategori }}</span>
-                    </div>
-
-                    <!-- Content -->
-                    <div class="space-y-2 flex-grow">
-                        <h4 class="text-sm font-bold text-coffee-dark leading-tight">{{ $item->nama_item }}</h4>
-                        
-                        @if($item->tipe === 'alat')
-                        <div class="flex items-center justify-between pt-1">
-                            <span class="text-xs font-medium text-coffee-light font-bold">Stok Peralatan:</span>
-                            <strong class="text-xs font-black text-coffee-dark">
-                                {{ number_format($item->stok, 0) }} <span class="text-[10px] font-bold text-coffee-medium">{{ $item->satuan }}</span>
-                            </strong>
-                        </div>
-                        @endif
-
-                        @if($item->harga_estimasi !== null)
-                        <div class="flex items-center justify-between pt-2 mt-2 border-t border-coffee-latte/40">
-                            <span class="text-[10px] font-bold text-coffee-light uppercase tracking-wider">Biaya Bulanan</span>
-                            <span class="text-sm font-black text-coffee-dark">Rp {{ number_format($item->harga_estimasi, 0, ',', '.') }}<span class="text-[10px] text-coffee-light font-medium">/bulan</span></span>
-                        </div>
-                        @endif
-
-                        @if($item->keterangan)
-                            <p class="text-[11px] text-coffee-light bg-coffee-cream/40 p-2.5 rounded-xl border border-coffee-latte/30 font-medium italic mt-2.5">
-                                "{{ $item->keterangan }}"
-                            </p>
-                        @endif
-                    </div>
-
-                    <!-- Footer Actions -->
-                    <div class="flex justify-end gap-1.5 pt-4 mt-3 border-t border-coffee-latte/50 no-print">
-                        @if($tab === 'active')
-                            <button @click="openEdit({{ json_encode($item) }})" class="p-2 rounded-xl hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Ubah Properti">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            </button>
-                            <form action="{{ route('properti.delete', $item->id_item) }}" method="POST" onsubmit="return confirm('Hapus properti ini dari daftar?')">
-                                @csrf
-                                <button type="submit" class="p-2 rounded-xl hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus Properti">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                            </form>
-                        @else
-                            <form action="{{ route('properti.restore', $item->id_item) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="p-2 rounded-xl hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 transition cursor-pointer" title="Pulihkan Properti">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                                </button>
-                            </form>
-                            <form action="{{ route('properti.force-delete', $item->id_item) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN properti ini?')">
-                                @csrf
-                                <button type="submit" class="p-2 rounded-xl hover:bg-red-100 text-red-600 hover:text-red-700 transition cursor-pointer" title="Hapus Permanen">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                            </form>
-                        @endif
-                    </div>
-                </div>
-            @empty
-                <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-white rounded-3xl border border-coffee-latte coffee-card">
-                    <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-coffee-medium mx-auto mb-4 border border-amber-100">
-                        <svg class="w-8 h-8 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                    <h3 class="font-bold text-coffee-dark">Daftar Properti Kosong</h3>
-                    <p class="text-xs text-coffee-light font-medium mt-1">Belum ada properti atau peralatan yang terdaftar.</p>
-                </div>
-            @endforelse
+        <!-- Properti Table -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3">Tipe</th>
+                            <th class="pb-3">Kategori</th>
+                            <th class="pb-3">Nama Properti / Alat</th>
+                            <th class="pb-3">Stok / Unit</th>
+                            <th class="pb-3">Biaya Bulanan</th>
+                            <th class="pb-3">Keterangan</th>
+                            <th class="pb-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
+                        @forelse($items as $item)
+                            <tr class="hover:bg-coffee-cream/20 transition-colors">
+                                <td class="py-3.5">
+                                    <span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide border 
+                                        {{ $item->tipe === 'properti' ? 'bg-amber-50 border-amber-200 text-coffee-light' : 'bg-blue-50 border-blue-200 text-blue-800' }}">
+                                        {{ $item->tipe === 'properti' ? 'Properti' : 'Peralatan' }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5 text-[10px] text-coffee-light uppercase font-bold tracking-wider">{{ $item->kategori }}</td>
+                                <td class="py-3.5 font-bold text-coffee-dark">{{ $item->nama_item }}</td>
+                                <td class="py-3.5 text-xs">
+                                    @if($item->tipe === 'alat')
+                                        <span class="font-bold text-coffee-dark">{{ number_format($item->stok, 0) }}</span> 
+                                        <span class="text-[10px] text-coffee-light font-bold uppercase">{{ $item->satuan }}</span>
+                                    @else
+                                        <span class="text-coffee-light/50">-</span>
+                                    @endif
+                                </td>
+                                <td class="py-3.5 text-xs font-black text-coffee-dark">
+                                    @if($item->harga_estimasi !== null)
+                                        Rp {{ number_format($item->harga_estimasi, 0, ',', '.') }}
+                                        <span class="text-[9px] text-coffee-light font-medium lowercase">/bln</span>
+                                    @else
+                                        <span class="text-coffee-light/50">-</span>
+                                    @endif
+                                </td>
+                                <td class="py-3.5 text-[11px] italic text-coffee-light max-w-[200px] truncate" title="{{ $item->keterangan }}">
+                                    {{ $item->keterangan ?: '-' }}
+                                </td>
+                                <td class="py-3.5 text-right">
+                                    <div class="flex justify-end gap-1.5 no-print">
+                                        @if($tab === 'active')
+                                            <button @click="openEdit({{ json_encode($item) }})" class="p-1.5 rounded-lg hover:bg-amber-50 text-coffee-light hover:text-coffee-dark transition cursor-pointer" title="Ubah">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </button>
+                                            <form action="{{ route('properti.delete', $item->id_item) }}" method="POST" onsubmit="return confirm('Hapus properti ini?')">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer" title="Hapus">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form action="{{ route('properti.restore', $item->id_item) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 transition cursor-pointer" title="Pulihkan">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('properti.force-delete', $item->id_item) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN?')">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-red-100 text-red-600 hover:text-red-700 transition cursor-pointer" title="Hapus Permanen">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="py-20 text-center">
+                                    <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-coffee-medium mx-auto mb-4 border border-amber-100">
+                                        <svg class="w-8 h-8 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                    </div>
+                                    <h3 class="font-bold text-coffee-dark">Daftar Properti Kosong</h3>
+                                    <p class="text-xs text-coffee-light font-medium mt-1">Belum ada properti atau peralatan yang terdaftar.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Pagination Links -->

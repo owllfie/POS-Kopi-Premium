@@ -108,14 +108,21 @@ class BahanAlatController extends Controller
     {
         $user = $this->getActiveUser();
         $item = BahanAlat::where('tipe', 'bahan')->findOrFail($id);
-        $action = $request->input('action'); // 'plus' or 'minus'
         
         $oldStok = $item->stok;
-        if ($action === 'plus') {
-            $item->stok += 1;
-        } elseif ($action === 'minus') {
-            if ($item->stok > 0) {
-                $item->stok -= 1;
+        if ($request->has('stok')) {
+            $newStok = $request->input('stok');
+            if (is_numeric($newStok) && $newStok >= 0) {
+                $item->stok = intval($newStok);
+            }
+        } else {
+            $action = $request->input('action'); // 'plus' or 'minus'
+            if ($action === 'plus') {
+                $item->stok += 1;
+            } elseif ($action === 'minus') {
+                if ($item->stok > 0) {
+                    $item->stok -= 1;
+                }
             }
         }
         
