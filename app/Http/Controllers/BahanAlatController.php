@@ -58,7 +58,7 @@ class BahanAlatController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
-            'stok' => 'required|integer|min:0',
+            'stok' => 'required|numeric|min:0',
             'satuan' => 'required|string|max:50',
             'harga_estimasi' => 'required|numeric|min:0',
             'keterangan' => 'nullable|string',
@@ -86,7 +86,7 @@ class BahanAlatController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
-            'stok' => 'required|integer|min:0',
+            'stok' => 'required|numeric|min:0',
             'satuan' => 'required|string|max:50',
             'harga_estimasi' => 'required|numeric|min:0',
             'keterangan' => 'nullable|string',

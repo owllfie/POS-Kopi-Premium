@@ -121,4 +121,10 @@ class MejaController extends Controller
 
         return back()->with('success', 'Meja berhasil dihapus secara permanen.');
     }
+
+    public function mejaTerisi(Request $request)
+    {
+        $mejas = Meja::where('nomor_meja', '!=', 99)->orderBy('nomor_meja', 'asc')->get();
+        return view('meja.terisi', compact('mejas'));
+    }
 }

@@ -524,6 +524,7 @@
                                             6502 => 'Titipan Pajak PB1',
                                             6503 => 'Sertifikasi Halal NIB',
                                             6504 => 'Admin Bank QRIS',
+                                            6505 => 'Selisih Kas Toko',
                                         ];
                                         echo $coa[$item['kode_akun']] ?? 'Beban Akun';
                                     @endphp
@@ -717,10 +718,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const labels = @json($labels ?? []);
     const dataValues = @json($data ?? []);
 
-    // Coffee theme color palette
-    const coffeeColors = [
-        '#4A3531', '#5D4037', '#6D4C41', '#7D5748', 
-        '#8D6E63', '#A1887F', '#BCAAA4', '#D7CCC8'
+    // High-contrast color palette for visual distinction
+    const chartColors = [
+        '#2563EB', // Blue
+        '#10B981', // Emerald
+        '#F59E0B', // Amber
+        '#7C3AED', // Violet
+        '#EC4899', // Pink
+        '#06B6D4', // Cyan
+        '#EF4444', // Red
+        '#8B5CF6'  // Purple
     ];
 
     // Chart.js instance variable
@@ -742,14 +749,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     label: 'Performa Penjualan',
                     data: dataValues,
                     backgroundColor: isPie 
-                        ? coffeeColors.slice(0, dataValues.length) 
-                        : (type === 'bar' ? '#8D6E63' : 'rgba(141, 110, 99, 0.15)'),
-                    borderColor: isPie ? '#FFFFFF' : '#4A3531',
+                        ? chartColors.slice(0, dataValues.length) 
+                        : (type === 'bar' ? '#10B981' : 'rgba(37, 99, 235, 0.15)'),
+                    borderColor: isPie ? '#FFFFFF' : '#2563EB',
                     borderWidth: isPie ? 2 : 3,
                     tension: 0.4, // Curvy line like Google currency chart
                     fill: type === 'line', // Fill under line chart
-                    pointBackgroundColor: '#4A3531',
-                    pointBorderColor: '#D4AF37',
+                    pointBackgroundColor: '#2563EB',
+                    pointBorderColor: '#FFFFFF',
                     pointBorderWidth: 2,
                     pointRadius: type === 'line' ? 5 : 0,
                     pointHoverRadius: type === 'line' ? 7 : 0

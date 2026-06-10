@@ -53,7 +53,7 @@
             :class="activeTab === 'stok' ? 'border-b-2 border-coffee-dark text-coffee-dark' : 'text-coffee-light hover:text-coffee-medium'"
             class="pb-2 px-4 font-bold text-sm transition cursor-pointer"
         >
-            Atur Stok Menu
+            Atur Stok Bahan
         </button>
     </div>
 
@@ -139,54 +139,60 @@
     <div x-show="activeTab === 'stok'" class="space-y-6" style="display: none;">
         <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card">
             <div class="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
-                <h3 class="font-extrabold text-coffee-dark">Manajemen Stok Menu</h3>
+                <h3 class="font-extrabold text-coffee-dark">Manajemen Stok Bahan</h3>
                 <div class="flex gap-3 w-full md:w-auto">
                     <input 
                         type="text" 
                         x-model="searchQuery" 
-                        placeholder="Cari menu..." 
+                        placeholder="Cari bahan..." 
                         class="w-full md:w-64 px-4 py-2 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50"
                     >
                     <select 
                         x-model="selectedCategory"
                         class="px-4 py-2 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50"
                     >
-                        <option value="all">Semua</option>
+                        <option value="all">Semua Kategori</option>
                         @foreach($categories as $cat)
-                            <option value="{{ $cat->id_kategori }}">{{ $cat->nama_kategori }}</option>
+                            <option value="{{ $cat }}">{{ $cat }}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <template x-for="menu in filteredMenus()" :key="menu.id_menu">
+                <template x-for="item in filteredBahan()" :key="item.id_item">
                     <div class="p-4 border border-coffee-latte rounded-2xl bg-white hover:border-coffee-light transition space-y-3">
                         <div class="flex justify-between items-start gap-2">
                             <div>
-                                <h4 class="font-extrabold text-coffee-dark text-xs truncate max-w-[120px]" x-text="menu.nama_menu"></h4>
-                                <p class="text-[10px] text-coffee-light font-bold" x-text="menu.kategori.nama_kategori"></p>
+                                <h4 class="font-extrabold text-coffee-dark text-xs truncate max-w-[150px]" x-text="item.nama_item"></h4>
+                                <p class="text-[10px] text-coffee-light font-bold" x-text="'Kategori: ' + item.kategori"></p>
                             </div>
                             <span 
-                                :class="menu.status === 'tersedia' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'"
+                                :class="item.stok > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'"
                                 class="text-[10px] px-2 py-0.5 rounded border font-bold uppercase" 
-                                x-text="menu.status"
+                                x-text="item.stok > 0 ? 'Tersedia' : 'Habis'"
                             ></span>
                         </div>
                         
                         <div class="flex items-center justify-between bg-coffee-cream/50 p-2 rounded-xl border border-coffee-latte">
                             <button 
-                                @click="updateStok(menu.id_menu, 'minus')"
+                                @click="updateStok(item.id_item, 'minus')"
                                 class="w-8 h-8 flex items-center justify-center bg-white border border-coffee-latte rounded-lg text-coffee-dark hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition font-black cursor-pointer"
                             >
                                 -
                             </button>
-                            <div class="text-center">
-                                <span class="block text-[10px] text-coffee-light font-bold uppercase">Stok</span>
-                                <span class="text-sm font-black text-coffee-dark" x-text="menu.stok"></span>
+                            <div class="text-center flex flex-col items-center justify-center px-1">
+                                <span class="block text-[9px] text-coffee-light font-bold uppercase" x-text="item.satuan"></span>
+                                <input 
+                                    type="number" 
+                                    :value="item.stok" 
+                                    @change="setStok(item.id_item, $event.target.value)"
+                                    class="w-16 text-center text-sm font-black text-coffee-dark bg-transparent border-b border-dashed border-coffee-light/40 focus:border-coffee-dark focus:outline-none p-0.5"
+                                    min="0"
+                                >
                             </div>
                             <button 
-                                @click="updateStok(menu.id_menu, 'plus')"
+                                @click="updateStok(item.id_item, 'plus')"
                                 class="w-8 h-8 flex items-center justify-center bg-white border border-coffee-latte rounded-lg text-coffee-dark hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition font-black cursor-pointer"
                             >
                                 +
@@ -208,10 +214,10 @@
                 activeTab: 'antrean',
                 searchQuery: '',
                 selectedCategory: 'all',
-                menus: @json($menus),
+                bahan: @json($bahan),
                 
-                updateStok(menuId, action) {
-                    fetch(`/menu/update-stok/${menuId}`, {
+                updateStok(itemId, action) {
+                    fetch(`/bahan-alat/update-stok/${itemId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -222,19 +228,41 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            const index = this.menus.findIndex(m => m.id_menu === menuId);
+                            const index = this.bahan.findIndex(b => b.id_item === itemId);
                             if (index !== -1) {
-                                this.menus[index].stok = data.new_stok;
-                                this.menus[index].status = data.new_status;
+                                this.bahan[index].stok = data.new_stok;
+                            }
+                        }
+                    });
+                },
+
+                setStok(itemId, newStok) {
+                    const val = parseFloat(newStok);
+                    if (isNaN(val) || val < 0) return;
+
+                    fetch(`/bahan-alat/update-stok/${itemId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ stok: val })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const index = this.bahan.findIndex(b => b.id_item === itemId);
+                            if (index !== -1) {
+                                this.bahan[index].stok = data.new_stok;
                             }
                         }
                     });
                 },
                 
-                filteredMenus() {
-                    return this.menus.filter(menu => {
-                        const matchesSearch = menu.nama_menu.toLowerCase().includes(this.searchQuery.toLowerCase());
-                        const matchesCategory = this.selectedCategory === 'all' || menu.id_kategori == this.selectedCategory;
+                filteredBahan() {
+                    return this.bahan.filter(item => {
+                        const matchesSearch = item.nama_item.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        const matchesCategory = this.selectedCategory === 'all' || item.kategori === this.selectedCategory;
                         return matchesSearch && matchesCategory;
                     });
                 }

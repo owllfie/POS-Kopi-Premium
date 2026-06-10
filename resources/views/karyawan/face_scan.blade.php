@@ -4,6 +4,16 @@
 @section('page_title', 'Presensi & Verifikasi Wajah')
 
 @section('content')
+@php
+    $simUser = null;
+    if (session()->has('simulated_user_id')) {
+        $simUser = \App\Models\User::find(session('simulated_user_id'));
+    }
+    if (!$simUser && auth()->check()) {
+        $simUser = auth()->user();
+    }
+    $roleName = $simUser ? $simUser->role->role : 'Guest';
+@endphp
 <div class="space-y-6" x-data="faceScanner()">
 
     <!-- Main Grid Layout -->
@@ -218,9 +228,32 @@
             absenStatus: null,
             lastCheckedEmployeeId: null,
             lastCheckedTime: 0,
+            inactivityTimeout: null,
 
             init() {
                 this.addLog("Aplikasi pemindai wajah siap.");
+
+                @if(strtolower($roleName) === 'system')
+                console.log("System role detected: setting up inactivity timer");
+                // Listen to user interactions to reset the timer
+                ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(event => {
+                    document.addEventListener(event, () => this.resetInactivityTimer(), true);
+                });
+
+                // Start timer immediately
+                this.resetInactivityTimer();
+                @endif
+            },
+
+            resetInactivityTimer() {
+                @if(strtolower($roleName) === 'system')
+                console.log("Inactivity timer reset");
+                clearTimeout(this.inactivityTimeout);
+                this.inactivityTimeout = setTimeout(() => {
+                    this.addLog("Tidak ada aktivitas selama 10 detik. Mengalihkan ke denah meja...");
+                    window.location.href = '{{ route("meja.terisi") }}';
+                }, 10000);
+                @endif
             },
 
             addLog(msg) {
@@ -229,6 +262,7 @@
                     const box = document.getElementById('logsBox');
                     if (box) box.parentElement.scrollTop = box.parentElement.scrollHeight;
                 });
+                this.resetInactivityTimer();
             },
 
             async loadModelsAndProcessImages() {
@@ -528,6 +562,13 @@
                         this.absenStatus = 'success';
                         this.absenMessage = result.message;
                         this.addLog(`[Server] ${result.message}`);
+
+                        @if(strtolower($roleName) === 'system')
+                        // Redirect back to meja-terisi after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = '{{ route("meja.terisi") }}';
+                        }, 2000);
+                        @endif
                     } else {
                         this.absenStatus = 'error';
                         this.absenMessage = result.message || 'Gagal merekam presensi.';

@@ -11,6 +11,7 @@ use App\Models\Menu;
 use App\Models\Meja;
 use App\Models\Shift;
 use App\Models\ActivityLog;
+use App\Models\KeuanganTransaksi;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -265,6 +266,29 @@ class DashboardController extends Controller
         // Close shift
         $activeShift->jam_selesai = Carbon::now();
         $activeShift->save();
+
+        // Record cash discrepancy in financial ledger
+        if ($selisih > 0) {
+            KeuanganTransaksi::create([
+                'tanggal' => Carbon::today()->format('Y-m-d'),
+                'kode_akun' => 4500, // Pendapatan Lain-lain
+                'deskripsi' => "Kelebihan Kas Laci: Shift {$user->username} (" . Carbon::now()->format('d/m/Y') . ")",
+                'metode' => 'Tunai',
+                'debit' => $selisih,
+                'kredit' => 0,
+                'id_user' => $user->id_user,
+            ]);
+        } elseif ($selisih < 0) {
+            KeuanganTransaksi::create([
+                'tanggal' => Carbon::today()->format('Y-m-d'),
+                'kode_akun' => 6505, // OPEX - Selisih Kas Toko (Shortage)
+                'deskripsi' => "Kekurangan Kas Laci: Shift {$user->username} (" . Carbon::now()->format('d/m/Y') . ")",
+                'metode' => 'Tunai',
+                'debit' => 0,
+                'kredit' => abs($selisih),
+                'id_user' => $user->id_user,
+            ]);
+        }
 
         ActivityLog::create([
             'id_user' => $user->id_user,

@@ -55,10 +55,10 @@ class PesananController extends Controller
                 });
             });
 
-            $menus = Menu::with('kategori')->orderBy('nama_menu', 'asc')->get();
-            $categories = \App\Models\Kategori::all();
+            $bahan = \App\Models\BahanAlat::where('tipe', 'bahan')->orderBy('nama_item', 'asc')->get();
+            $categories = \App\Models\BahanAlat::where('tipe', 'bahan')->select('kategori')->distinct()->pluck('kategori');
 
-            return view('pesanan.chef', compact('kitchenItems', 'menus', 'categories'));
+            return view('pesanan.chef', compact('kitchenItems', 'bahan', 'categories'));
         }
 
         if ($role === 'stock keeper') {

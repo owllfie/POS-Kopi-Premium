@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             ['id_role' => 4, 'role' => 'kasir'],
             ['id_role' => 5, 'role' => 'chef'],
             ['id_role' => 6, 'role' => 'stock keeper'],
+            ['id_role' => 7, 'role' => 'system'],
         ];
         foreach ($roles as $r) {
             Role::create($r);
@@ -80,6 +81,13 @@ class DatabaseSeeder extends Seeder
                 'password' => 'password',
                 'id_role' => 6,
             ],
+            [
+                'id_user' => 7,
+                'username' => 'system',
+                'email' => 'system@pos.com',
+                'password' => 'password',
+                'id_role' => 7,
+            ],
         ];
         foreach ($users as $u) {
             User::create([
@@ -96,7 +104,7 @@ class DatabaseSeeder extends Seeder
             'dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 
             'users', 'menu', 'kategori', 'meja', 'shift', 'akses', 
             'log', 'setting', 'backup', 'bahan_alat', 'properti', 'karyawan',
-            'promo', 'jabatan'
+            'promo', 'jabatan', 'slip_gaji'
         ];
  
         // Seeding rules for each role
@@ -106,14 +114,14 @@ class DatabaseSeeder extends Seeder
         }
  
         // Admin gets CRUDs and Operations, but not system configs
-        $adminAllowed = ['dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 'users', 'menu', 'kategori', 'meja', 'shift', 'bahan_alat', 'properti', 'karyawan', 'jabatan', 'promo'];
+        $adminAllowed = ['dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 'users', 'menu', 'kategori', 'meja', 'shift', 'bahan_alat', 'properti', 'karyawan', 'jabatan', 'promo', 'slip_gaji'];
         foreach ($modules as $mod) {
             $allowed = in_array($mod, $adminAllowed) ? '1' : '0';
             Aksess::create(['id_role' => 2, 'modul' => $mod, 'allowed' => $allowed]);
         }
 
         // Manager gets Reports and History only
-        $managerAllowed = ['dashboard', 'laporan', 'transaksi', 'bahan_alat', 'properti'];
+        $managerAllowed = ['dashboard', 'laporan', 'transaksi', 'bahan_alat', 'properti', 'slip_gaji'];
         foreach ($modules as $mod) {
             $allowed = in_array($mod, $managerAllowed) ? '1' : '0';
             Aksess::create(['id_role' => 3, 'modul' => $mod, 'allowed' => $allowed]);

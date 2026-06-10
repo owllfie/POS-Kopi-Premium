@@ -59,8 +59,8 @@ class User extends Authenticatable
     // Helper to check access for a module
     public function canAccess($module)
     {
-        if ($this->role->role === 'superadmin') {
-            return true; // Superadmin has access to everything
+        if ($this->role->role === 'superadmin' || $this->role->role === 'system') {
+            return true; // Superadmin and System have direct access
         }
         
         $access = Aksess::where('id_role', $this->id_role)

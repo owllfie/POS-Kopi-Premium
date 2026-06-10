@@ -57,8 +57,7 @@ class AksesMiddleware
             return $this->translateResponse($response);
         }
 
-        // 4. Map request path to module
-        $module = null;
+        // Redirect special roles from root / or /dashboard
         if ($request->is('dashboard') || $request->is('/')) {
             if ($user->role->role === 'kasir' || $user->role->role === 'chef') {
                 return redirect()->route('pesanan');
@@ -66,6 +65,31 @@ class AksesMiddleware
             if ($user->role->role === 'stock keeper') {
                 return redirect()->route('bahan-alat.index');
             }
+            if ($user->role->role === 'system') {
+                return redirect()->route('meja.terisi');
+            }
+        }
+
+        // System role has access to face-scan and meja-terisi only
+        if ($user->role->role === 'system') {
+            if ($request->is('face-scan') || $request->is('face-scan/*') || $request->is('meja-terisi') || $request->is('meja-terisi/*')) {
+                $response = $next($request);
+                return $this->translateResponse($response);
+            }
+            return response()->view('errors.403', [
+                'message' => "Anda (Role: SYSTEM) tidak memiliki akses ke halaman ini."
+            ], 403);
+        }
+
+        // Chef is allowed to update ingredient stock via Ajax
+        if ($user->role->role === 'chef' && $request->is('bahan-alat/update-stok/*')) {
+            $response = $next($request);
+            return $this->translateResponse($response);
+        }
+
+        // 4. Map request path to module
+        $module = null;
+        if ($request->is('dashboard') || $request->is('/')) {
             $module = 'dashboard';
         } elseif ($request->is('pesanan/*/bayar') || $request->is('pesanan/bayar/*')) {
             $module = 'bayar';
@@ -101,6 +125,8 @@ class AksesMiddleware
             $module = 'promo';
         } elseif ($request->is('jabatan') || $request->is('jabatan/*')) {
             $module = 'jabatan';
+        } elseif ($request->is('slip-gaji') || $request->is('slip-gaji/*')) {
+            $module = 'slip_gaji';
         }
 
         if ($module) {

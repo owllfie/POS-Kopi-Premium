@@ -19,6 +19,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\PromoController;
 use App\Http\Controllers\JabatanController;
+use App\Http\Controllers\SlipGajiController;
 
 // 1. Public QR Guest Menu (bypasses auth checks but checked inside middleware)
 Route::get('/menu/{qrcode_token}', [GuestMenuController::class, 'show'])->name('guest.menu');
@@ -81,6 +82,8 @@ Route::prefix('kategori')->name('kategori.')->group(function () {
     Route::post('/force-delete/{id}', [KategoriController::class, 'forceDelete'])->name('forceDelete');
 });
 
+Route::get('/meja-terisi', [MejaController::class, 'mejaTerisi'])->name('meja.terisi');
+
 Route::prefix('meja')->name('meja.')->group(function () {
     Route::get('/', [MejaController::class, 'index'])->name('index');
     Route::post('/store', [MejaController::class, 'store'])->name('store');
@@ -130,7 +133,11 @@ Route::prefix('jabatan')->name('jabatan.')->group(function () {
     Route::post('/force-delete/{id}', [JabatanController::class, 'forceDelete'])->name('forceDelete');
 });
 
-
+Route::prefix('slip-gaji')->name('slip-gaji.')->group(function () {
+    Route::get('/', [SlipGajiController::class, 'index'])->name('index');
+    Route::post('/store', [SlipGajiController::class, 'store'])->name('store');
+    Route::post('/delete/{id}', [SlipGajiController::class, 'delete'])->name('delete');
+});
 
 Route::prefix('akses')->name('akses.')->group(function () {
     Route::get('/', [AksesController::class, 'index'])->name('index');

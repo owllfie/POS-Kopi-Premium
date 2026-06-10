@@ -39,6 +39,7 @@ class AksesController extends Controller
             'properti' => 'Properti Cafe',
             'promo' => 'Kelola Promo',
             'jabatan' => 'Kelola Jabatan Karyawan',
+            'slip_gaji' => 'Slip Gaji Karyawan',
             'akses' => 'Kelola Hak Akses',
             'log' => 'Log Aktivitas',
             'setting' => 'Pengaturan Web',

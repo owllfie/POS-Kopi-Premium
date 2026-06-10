@@ -74,6 +74,7 @@ class KeuanganTransaksi extends Model
             6502 => 'OPEX - Pajak PB1/PBJT (10%)',
             6503 => 'OPEX - Sertifikasi Halal / NIB',
             6504 => 'OPEX - Biaya Admin Bank / QRIS',
+            6505 => 'OPEX - Selisih Kas Toko (Shortage)',
         ];
 
         return $coa[$this->kode_akun] ?? 'Akun Tidak Dikenal (' . $this->kode_akun . ')';

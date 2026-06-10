@@ -206,20 +206,10 @@
 
                 <form action="{{ route('promo.store') }}" method="POST" class="space-y-4">
                     @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label for="nama_promo" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Nama Promo</label>
                             <input type="text" name="nama_promo" id="nama_promo" required class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white" placeholder="Contoh: Diskon Kopi Senja">
-                        </div>
-
-                        <div>
-                            <label for="tipe_promo" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Tipe Promo</label>
-                            <select name="tipe_promo" id="tipe_promo" required class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                                <option value="Harian">Harian</option>
-                                <option value="Mingguan">Mingguan</option>
-                                <option value="Bulanan">Bulanan</option>
-                                <option value="Sekali Pakai">Sekali Pakai</option>
-                            </select>
                         </div>
                     </div>
 
@@ -311,20 +301,10 @@
 
                 <form :action="`{{ url('/promo/update') }}/${editPromo.id_promo}`" method="POST" class="space-y-4">
                     @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label for="edit_nama_promo" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Nama Promo</label>
                             <input type="text" name="nama_promo" id="edit_nama_promo" x-model="editPromo.nama_promo" required class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                        </div>
-
-                        <div>
-                            <label for="edit_tipe_promo" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Tipe Promo</label>
-                            <select name="tipe_promo" id="edit_tipe_promo" x-model="editPromo.tipe_promo" required class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                                <option value="Harian">Harian</option>
-                                <option value="Mingguan">Mingguan</option>
-                                <option value="Bulanan">Bulanan</option>
-                                <option value="Sekali Pakai">Sekali Pakai</option>
-                            </select>
                         </div>
                     </div>
 

@@ -166,7 +166,11 @@ class ReportController extends Controller
         $revOthers = isset($ledgerMonthly[4500]) ? $ledgerMonthly[4500]->total_debit : 0;
         $grossSales = $revFood + $revDrink + $revMerch + $revPartnership + $revOthers;
 
-        $discount = isset($ledgerMonthly[6304]) ? $ledgerMonthly[6304]->total_kredit : 0; // 6304: Diskon
+        $posDiscounts = DB::table('pesanan')
+            ->whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
+            ->whereNull('deleted_at')
+            ->sum('diskon');
+        $discount = (isset($ledgerMonthly[6304]) ? $ledgerMonthly[6304]->total_kredit : 0) + $posDiscounts; // 6304: Diskon
         $netRevenue = $grossSales - $discount;
 
         // HPP (COGS)
@@ -298,7 +302,8 @@ class ReportController extends Controller
             ->select(
                 DB::raw("DATE(created_at) as tanggal"),
                 DB::raw("SUM(total_harga) as net_sales"),
-                DB::raw("SUM(pajak) as tax_sales")
+                DB::raw("SUM(pajak) as tax_sales"),
+                DB::raw("SUM(diskon) as discount_sales")
             )
             ->whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
             ->whereNull('deleted_at')
@@ -351,6 +356,18 @@ class ReportController extends Controller
                     'metode' => 'Tunai/QRIS',
                     'debit' => $sale->tax_sales,
                     'kredit' => 0,
+                    'is_sale' => true,
+                ];
+            }
+
+            if ($sale->discount_sales > 0) {
+                $ledgerItems[] = [
+                    'tanggal' => $sale->tanggal,
+                    'kode_akun' => 6304,
+                    'deskripsi' => 'Diskon & Promo Penjualan POS Harian',
+                    'metode' => 'Potong',
+                    'debit' => 0,
+                    'kredit' => $sale->discount_sales,
                     'is_sale' => true,
                 ];
             }

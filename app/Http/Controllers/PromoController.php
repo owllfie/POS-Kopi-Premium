@@ -45,7 +45,6 @@ class PromoController extends Controller
     {
         $validated = $request->validate([
             'nama_promo' => 'required|string|max:50',
-            'tipe_promo' => 'required|in:Harian,Mingguan,Bulanan,Sekali Pakai',
             'deskripsi' => 'nullable|string|max:255',
             'start_time' => 'nullable|date',
             'end_time' => 'nullable|date',
@@ -66,7 +65,6 @@ class PromoController extends Controller
 
         $validated = $request->validate([
             'nama_promo' => 'required|string|max:50',
-            'tipe_promo' => 'required|in:Harian,Mingguan,Bulanan,Sekali Pakai',
             'deskripsi' => 'nullable|string|max:255',
             'start_time' => 'nullable|date',
             'end_time' => 'nullable|date',

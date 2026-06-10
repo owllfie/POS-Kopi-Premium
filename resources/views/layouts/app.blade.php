@@ -26,26 +26,48 @@
         $roleName = $simUser ? $simUser->role->role : 'Guest';
         $authUser = auth()->user();
         
-        // Modules lists to render in sidebar
-        $sidebarItems = [
-            ['module' => 'dashboard', 'route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'chart-bar'],
-            ['module' => 'laporan', 'route' => 'laporan', 'label' => 'Laporan Keuangan', 'icon' => 'document-report'],
-            ['module' => 'transaksi', 'route' => 'transaksi', 'label' => 'Riwayat Transaksi', 'icon' => 'history'],
-            ['module' => 'users', 'route' => 'users.index', 'label' => 'Kelola Users', 'icon' => 'users'],
-            ['module' => 'karyawan', 'route' => 'karyawan.index', 'label' => 'Kelola Karyawan', 'icon' => 'identification'],
-            ['module' => 'jabatan', 'route' => 'jabatan.index', 'label' => 'Kelola Jabatan', 'icon' => 'briefcase'],
-            ['module' => 'karyawan', 'route' => 'face-scan', 'label' => 'Presensi Wajah', 'icon' => 'camera'],
-            ['module' => 'menu', 'route' => 'menu.index', 'label' => 'Kelola Menu', 'icon' => 'coffee'],
-            ['module' => 'kategori', 'route' => 'kategori.index', 'label' => 'Kelola Kategori', 'icon' => 'tag'],
-            ['module' => 'promo', 'route' => 'promo.index', 'label' => 'Kelola Promo', 'icon' => 'gift'],
-            ['module' => 'meja', 'route' => 'meja.index', 'label' => 'Kelola Meja & QR', 'icon' => 'table'],
-            ['module' => 'bahan_alat', 'route' => 'bahan-alat.index', 'label' => 'Bahan', 'icon' => 'archive'],
-            ['module' => 'properti', 'route' => 'properti.index', 'label' => 'Properti Cafe', 'icon' => 'office-building'],
-            ['module' => 'akses', 'route' => 'akses.index', 'label' => 'Hak Akses', 'icon' => 'shield'],
-            ['module' => 'log', 'route' => 'log', 'label' => 'Log Aktivitas', 'icon' => 'database-log'],
-            ['module' => 'setting', 'route' => 'setting.index', 'label' => 'Pengaturan Web', 'icon' => 'cog'],
-            ['module' => 'backup', 'route' => 'backup.index', 'label' => 'Backup Database', 'icon' => 'cloud-download'],
+        // Modules lists grouped by category to render in sidebar
+        $sidebarCategories = [
+            'Utama' => [
+                ['module' => 'dashboard', 'route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'chart-bar'],
+            ],
+            'Menu & Restoran' => [
+                ['module' => 'menu', 'route' => 'menu.index', 'label' => 'Kelola Menu', 'icon' => 'coffee'],
+                ['module' => 'kategori', 'route' => 'kategori.index', 'label' => 'Kelola Kategori', 'icon' => 'tag'],
+                ['module' => 'promo', 'route' => 'promo.index', 'label' => 'Kelola Promo', 'icon' => 'gift'],
+                ['module' => 'meja', 'route' => 'meja.index', 'label' => 'Kelola Meja & QR', 'icon' => 'table'],
+            ],
+            'Keuangan' => [
+                ['module' => 'laporan', 'route' => 'laporan', 'label' => 'Laporan Keuangan', 'icon' => 'document-report'],
+                ['module' => 'transaksi', 'route' => 'transaksi', 'label' => 'Riwayat Transaksi', 'icon' => 'history'],
+            ],
+            'Kepegawaian' => [
+                ['module' => 'karyawan', 'route' => 'karyawan.index', 'label' => 'Kelola Karyawan', 'icon' => 'identification'],
+                ['module' => 'jabatan', 'route' => 'jabatan.index', 'label' => 'Kelola Jabatan', 'icon' => 'briefcase'],
+                ['module' => 'slip_gaji', 'route' => 'slip-gaji.index', 'label' => 'Slip Gaji', 'icon' => 'credit-card'],
+                ['module' => 'karyawan', 'route' => 'face-scan', 'label' => 'Presensi Wajah', 'icon' => 'camera'],
+            ],
+            'Inventaris & Properti' => [
+                ['module' => 'bahan_alat', 'route' => 'bahan-alat.index', 'label' => 'Bahan', 'icon' => 'archive'],
+                ['module' => 'properti', 'route' => 'properti.index', 'label' => 'Properti Cafe', 'icon' => 'office-building'],
+            ],
+            'Sistem & Admin' => [
+                ['module' => 'users', 'route' => 'users.index', 'label' => 'Kelola Users', 'icon' => 'users'],
+                ['module' => 'akses', 'route' => 'akses.index', 'label' => 'Hak Akses', 'icon' => 'shield'],
+                ['module' => 'log', 'route' => 'log', 'label' => 'Log Aktivitas', 'icon' => 'database-log'],
+                ['module' => 'setting', 'route' => 'setting.index', 'label' => 'Pengaturan Web', 'icon' => 'cog'],
+                ['module' => 'backup', 'route' => 'backup.index', 'label' => 'Backup Database', 'icon' => 'cloud-download'],
+            ],
         ];
+
+        if ($roleName === 'system') {
+            $sidebarCategories = [
+                'Sistem' => [
+                    ['module' => 'karyawan', 'route' => 'face-scan', 'label' => 'Presensi', 'icon' => 'camera'],
+                    ['module' => 'meja', 'route' => 'meja.terisi', 'label' => 'Meja yang Terisi', 'icon' => 'table'],
+                ]
+            ];
+        }
     @endphp
 </head>
 <body class="bg-coffee-cream font-sans min-h-screen text-coffee-text antialiased" x-data="{ sidebarOpen: {{ in_array($roleName, ['kasir', 'chef']) ? 'false' : 'true' }} }">
@@ -77,60 +99,72 @@
             </div>
 
             <!-- Sidebar Navigation Links -->
-            <nav id="sidebar-nav" class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
-                @foreach ($sidebarItems as $item)
-                    @if ($simUser && $simUser->canAccess($item['module']))
-                        @php
-                            $isActive = request()->routeIs($item['route']) || 
-                                        (explode('.', $item['route'])[0] !== 'dashboard' && request()->is(explode('.', $item['route'])[0] . '*'));
-                        @endphp
-                        <a 
-                            href="{{ route($item['route']) }}" 
-                            class="flex items-center gap-3 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 group {{ $isActive ? 'bg-coffee-medium text-coffee-gold shadow-md border-l-4 border-coffee-gold pl-3' : 'hover:bg-coffee-medium/40 hover:text-white' }}"
-                        >
-                            <span class="w-5 h-5 flex items-center justify-center transition group-hover:scale-105 {{ $isActive ? 'text-coffee-gold' : 'text-coffee-light group-hover:text-coffee-gold' }}">
-                                @if($item['icon'] === 'chart-bar')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
-                                @elseif($item['icon'] === 'clipboard-list')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012-2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                                @elseif($item['icon'] === 'document-report')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                @elseif($item['icon'] === 'history')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                @elseif($item['icon'] === 'users')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                @elseif($item['icon'] === 'coffee')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                                @elseif($item['icon'] === 'tag')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                @elseif($item['icon'] === 'gift')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0h4a2 2 0 012 2v2H6v-2a2 2 0 012-2h4zm-8 4v8a2 2 0 002 2h12a2 2 0 002-2v-8H4z"/></svg>
-                                @elseif($item['icon'] === 'table')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                @elseif($item['icon'] === 'clock')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                @elseif($item['icon'] === 'shield')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                @elseif($item['icon'] === 'database-log')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
-                                @elseif($item['icon'] === 'cog')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
-                                @elseif($item['icon'] === 'cloud-download')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
-                                @elseif($item['icon'] === 'archive')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                @elseif($item['icon'] === 'office-building')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                @elseif($item['icon'] === 'identification')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
-                                @elseif($item['icon'] === 'briefcase')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                @elseif($item['icon'] === 'camera')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
-                                @endif
-                            </span>
-                            <span class="truncate">{{ $item['label'] }}</span>
-                        </a>
+            <nav id="sidebar-nav" class="flex-1 overflow-y-auto px-4 py-6 space-y-5">
+                @foreach ($sidebarCategories as $categoryName => $items)
+                    @php
+                        $accessibleItems = array_filter($items, function($item) use ($simUser) {
+                            return $simUser && $simUser->canAccess($item['module']);
+                        });
+                    @endphp
+                    @if (count($accessibleItems) > 0)
+                        <div class="space-y-1">
+                            <h3 class="px-4 text-[10px] font-black text-coffee-gold/85 uppercase tracking-widest mb-2 select-none">{{ $categoryName }}</h3>
+                            @foreach ($accessibleItems as $item)
+                                @php
+                                    $isActive = request()->routeIs($item['route']) || 
+                                                (explode('.', $item['route'])[0] !== 'dashboard' && request()->is(explode('.', $item['route'])[0] . '*'));
+                                @endphp
+                                <a 
+                                    href="{{ route($item['route']) }}" 
+                                    class="flex items-center gap-3 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 group {{ $isActive ? 'bg-coffee-medium text-coffee-gold shadow-md border-l-4 border-coffee-gold pl-3' : 'hover:bg-coffee-medium/40 hover:text-white' }}"
+                                >
+                                    <span class="w-5 h-5 flex items-center justify-center transition group-hover:scale-105 {{ $isActive ? 'text-coffee-gold' : 'text-coffee-light group-hover:text-coffee-gold' }}">
+                                        @if($item['icon'] === 'chart-bar')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
+                                        @elseif($item['icon'] === 'clipboard-list')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012-2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                        @elseif($item['icon'] === 'document-report')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        @elseif($item['icon'] === 'history')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        @elseif($item['icon'] === 'users')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        @elseif($item['icon'] === 'coffee')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                        @elseif($item['icon'] === 'tag')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        @elseif($item['icon'] === 'gift')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0h4a2 2 0 012 2v2H6v-2a2 2 0 012-2h4zm-8 4v8a2 2 0 002 2h12a2 2 0 002-2v-8H4z"/></svg>
+                                        @elseif($item['icon'] === 'table')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        @elseif($item['icon'] === 'clock')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        @elseif($item['icon'] === 'shield')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                        @elseif($item['icon'] === 'database-log')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                                        @elseif($item['icon'] === 'cog')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        @elseif($item['icon'] === 'cloud-download')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+                                        @elseif($item['icon'] === 'archive')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                        @elseif($item['icon'] === 'office-building')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        @elseif($item['icon'] === 'identification')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                                        @elseif($item['icon'] === 'briefcase')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                        @elseif($item['icon'] === 'credit-card')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                        @elseif($item['icon'] === 'camera')
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+                                        @endif
+                                    </span>
+                                    <span class="truncate">{{ $item['label'] }}</span>
+                                </a>
+                            @endforeach
+                        </div>
                     @endif
                 @endforeach
             </nav>
@@ -153,30 +187,6 @@
                     
                     <!-- Vertical Divider (only visible when clock is visible) -->
                     <div class="h-8 w-px bg-coffee-latte hidden md:block"></div>
-
-                    <!-- Role Switcher Dropdown (Only for Superadmin & Admin) -->
-                    @if($authUser && in_array($authUser->role->role, ['superadmin', 'admin']))
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="flex items-center gap-1.5 px-3 py-1.5 bg-coffee-cream hover:bg-coffee-latte border border-coffee-light rounded-xl text-xs font-bold text-coffee-dark transition cursor-pointer select-none">
-                            <svg class="w-3.5 h-3.5 text-coffee-medium" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            <span>Simulasi: {{ strtoupper($roleName) }}</span>
-                            <svg class="w-3 h-3 text-coffee-medium" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-52 bg-white border border-coffee-light rounded-2xl shadow-xl py-2 z-50 animate-fade-in" style="display: none;">
-                            <div class="px-4 py-1.5 border-b border-coffee-latte text-[9px] font-extrabold text-coffee-light uppercase tracking-wider mb-1">Pilih Role Simulasi</div>
-                            @php
-                                $rolesToSimulate = \App\Models\Role::all();
-                            @endphp
-                            @foreach($rolesToSimulate as $r)
-                                <a href="{{ route('simulate.role', $r->id_role) }}" class="block px-4 py-2 text-xs font-semibold text-coffee-dark hover:bg-coffee-cream transition {{ $roleName === $r->role ? 'bg-coffee-cream text-coffee-gold font-bold' : '' }}">
-                                    {{ strtoupper($r->role) }}
-                                </a>
-                            @endforeach
-                        </div>
-                    </div>
-                    <!-- Small Vertical Divider -->
-                    <div class="h-6 w-px bg-coffee-latte"></div>
-                    @endif
 
                     <!-- User Profile & Logout -->
                     <div class="flex items-center gap-4">
