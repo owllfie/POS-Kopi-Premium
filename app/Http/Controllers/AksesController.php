@@ -37,7 +37,6 @@ class AksesController extends Controller
             'meja' => 'Kelola Meja & QR',
             'bahan_alat' => 'Bahan',
             'properti' => 'Properti Cafe',
-            'shift' => 'Kelola Shift Kasir',
             'promo' => 'Kelola Promo',
             'jabatan' => 'Kelola Jabatan Karyawan',
             'akses' => 'Kelola Hak Akses',

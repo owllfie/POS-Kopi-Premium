@@ -118,6 +118,8 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
     Route::post('/force-delete/{id}', [KaryawanController::class, 'forceDelete'])->name('forceDelete');
 });
 
+Route::get('/face-scan', [KaryawanController::class, 'faceScan'])->name('face-scan');
+
 Route::prefix('jabatan')->name('jabatan.')->group(function () {
     Route::get('/', [JabatanController::class, 'index'])->name('index');
     Route::post('/store', [JabatanController::class, 'store'])->name('store');

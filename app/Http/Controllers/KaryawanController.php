@@ -50,10 +50,18 @@ class KaryawanController extends Controller
             'nama_karyawan' => 'required|string|max:50',
             'id_jabatan' => 'required|exists:jabatan,id_jabatan',
             'gaji' => 'required|numeric|min:0',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $jabatan = Jabatan::findOrFail($validated['id_jabatan']);
         $validated['pekerjaan'] = $jabatan->nama_jabatan;
+
+        if ($request->hasFile('foto')) {
+            $file = $request->file('foto');
+            $filename = 'karyawan_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads'), $filename);
+            $validated['foto'] = 'uploads/' . $filename;
+        }
 
         Karyawan::create($validated);
 
@@ -76,10 +84,21 @@ class KaryawanController extends Controller
             'nama_karyawan' => 'required|string|max:50',
             'id_jabatan' => 'required|exists:jabatan,id_jabatan',
             'gaji' => 'required|numeric|min:0',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $jabatan = Jabatan::findOrFail($validated['id_jabatan']);
         $validated['pekerjaan'] = $jabatan->nama_jabatan;
+
+        if ($request->hasFile('foto')) {
+            if ($karyawan->foto && file_exists(public_path($karyawan->foto))) {
+                @unlink(public_path($karyawan->foto));
+            }
+            $file = $request->file('foto');
+            $filename = 'karyawan_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads'), $filename);
+            $validated['foto'] = 'uploads/' . $filename;
+        }
 
         $karyawan->update($validated);
 
@@ -140,5 +159,11 @@ class KaryawanController extends Controller
         ]);
 
         return back()->with('success', 'Karyawan berhasil dihapus secara permanen.');
+    }
+
+    public function faceScan(Request $request)
+    {
+        $karyawans = Karyawan::whereNotNull('foto')->with('jabatan')->get();
+        return view('karyawan.face_scan', compact('karyawans'));
     }
 }

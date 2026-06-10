@@ -175,16 +175,65 @@
                                             <div>
                                                 <h4 class="text-sm font-bold text-coffee-dark leading-tight">{{ $item->nama_menu }}</h4>
                                             </div>
-                                            <div class="flex items-center justify-end mt-2">
+                                            <div class="flex items-center justify-end mt-2" @click.stop>
                                                 @if($isHabis)
                                                     <span class="text-[10px] font-extrabold uppercase text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">Habis</span>
                                                 @else
-                                                    <button 
-                                                        @click.stop="addToCart({{ $item->id_menu }}, '{{ addslashes($item->nama_menu) }}', {{ $item->harga }})"
-                                                        class="px-3 py-1 bg-coffee-dark text-white rounded-lg text-xs font-bold hover:bg-coffee-medium transition cursor-pointer"
-                                                    >
-                                                        Tambah +
-                                                    </button>
+                                                    <!-- Quantity Selector on Card if already in Cart -->
+                                                    <template x-if="cartItems[{{ $item->id_menu }}]">
+                                                        <div class="flex items-center gap-1.5">
+                                                            <!-- Qty Buttons -->
+                                                            <div class="flex items-center border border-coffee-latte rounded-lg bg-white overflow-hidden scale-90">
+                                                                <button type="button" @click="changeQty({{ $item->id_menu }}, -1)" class="px-2 py-0.5 text-xs font-extrabold hover:bg-coffee-cream transition select-none">-</button>
+                                                                <span class="px-2 text-xs font-extrabold text-coffee-dark" x-text="cartItems[{{ $item->id_menu }}].qty"></span>
+                                                                <button type="button" @click="changeQty({{ $item->id_menu }}, 1)" class="px-2 py-0.5 text-xs font-extrabold hover:bg-coffee-cream transition select-none">+</button>
+                                                            </div>
+                                                            <!-- Hand Tracking Button on Menu Card -->
+                                                            <button 
+                                                                type="button"
+                                                                @click="startHandTrackingForMenu({
+                                                                    id: {{ $item->id_menu }},
+                                                                    name: '{{ addslashes($item->nama_menu) }}',
+                                                                    price: {{ $item->harga }}
+                                                                })"
+                                                                class="p-1.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition flex items-center justify-center cursor-pointer shadow-sm"
+                                                                title="Atur jumlah dengan jari tangan"
+                                                            >
+                                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                    
+                                                    <!-- Simple Add Button + Hand Tracking if not in Cart -->
+                                                    <template x-if="!cartItems[{{ $item->id_menu }}]">
+                                                        <div class="flex items-center gap-1.5">
+                                                            <button 
+                                                                @click="addToCart({{ $item->id_menu }}, '{{ addslashes($item->nama_menu) }}', {{ $item->harga }})"
+                                                                class="px-2.5 py-1 bg-coffee-dark text-white rounded-lg text-xs font-bold hover:bg-coffee-medium transition cursor-pointer"
+                                                            >
+                                                                Tambah +
+                                                            </button>
+                                                            
+                                                            <button 
+                                                                type="button"
+                                                                @click="startHandTrackingForMenu({
+                                                                    id: {{ $item->id_menu }},
+                                                                    name: '{{ addslashes($item->nama_menu) }}',
+                                                                    price: {{ $item->harga }}
+                                                                })"
+                                                                class="p-1.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition flex items-center justify-center cursor-pointer shadow-sm"
+                                                                title="Atur jumlah dengan jari tangan"
+                                                            >
+                                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </template>
                                                 @endif
                                             </div>
                                         </div>
@@ -523,7 +572,7 @@
                                         
                                         <button 
                                             type="button"
-                                            @click="startHandTracking()"
+                                            @click="startHandTrackingFromDetail()"
                                             class="px-3 py-1.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                                         >
                                             <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
@@ -567,7 +616,10 @@
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 class="font-extrabold text-coffee-dark text-base">Atur Jumlah dengan Jari</h3>
-                        <p class="text-xs text-coffee-light font-medium mt-1">Angkat jari tangan Anda (1-5) di depan kamera.</p>
+                        <p class="text-xs text-coffee-light font-medium mt-1">
+                            Menu: <span class="text-coffee-medium font-bold" x-text="handTrackingTarget === 'detail' ? selectedMenu.name : (handTrackingTarget ? handTrackingTarget.name : '')"></span>
+                        </p>
+                        <p class="text-[10px] text-coffee-light font-medium mt-0.5">Angkat jari tangan Anda (1-5) di depan kamera.</p>
                     </div>
                     <button @click="stopHandTracking()" class="text-coffee-medium hover:text-coffee-dark font-extrabold text-xs p-1.5 hover:bg-coffee-cream rounded-lg transition cursor-pointer">
                         Tutup
@@ -577,7 +629,7 @@
                 <!-- Video/Canvas Area -->
                 <div class="relative bg-slate-950 flex items-center justify-center overflow-hidden aspect-video">
                     <!-- Invisible webcam video -->
-                    <video id="hand-webcam" autoplay playsinline class="hidden"></video>
+                    <video id="hand-webcam" autoplay playsinline muted style="position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;"></video>
                     
                     <!-- Mirrored Output Canvas -->
                     <canvas id="hand-canvas" width="640" height="480" class="w-full h-full object-cover transform scale-x-[-1]"></canvas>
@@ -595,7 +647,7 @@
                     <div x-show="hasCameraError" class="absolute inset-0 bg-coffee-dark/90 flex flex-col items-center justify-center p-6 text-center gap-3 text-white">
                         <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         <span class="text-sm font-bold text-red-400">Gagal Mengakses Kamera</span>
-                        <p class="text-xs text-coffee-light max-w-sm">Pastikan Anda telah memberikan izin akses kamera pada browser Anda.</p>
+                        <p class="text-xs text-coffee-light max-w-sm" x-text="cameraErrorMessage || 'Pastikan Anda telah memberikan izin akses kamera pada browser Anda.'"></p>
                     </div>
                 </div>
 
@@ -654,8 +706,9 @@
                 detectedFingers: 0,
                 isCameraLoading: false,
                 hasCameraError: false,
-                handsDetector: null,
-                cameraInstance: null,
+                cameraErrorMessage: '',
+                handTrackingTarget: null, // 'detail' or { id, name, price }
+                latestLandmarks: null,
                 
                 openMenuDetail(item) {
                     this.selectedMenu = item;
@@ -746,6 +799,7 @@
                         }
                     };
 
+                    this.recordingItemId = null;
                     this.recognition.onerror = (event) => {
                         console.error("Speech recognition error", event.error);
                         this.recordingItemId = null;
@@ -759,11 +813,32 @@
                 },
 
                 // Hand Tracking Logic
+                startHandTrackingFromDetail() {
+                    this.handTrackingTarget = 'detail';
+                    this.startHandTracking();
+                },
+
+                startHandTrackingForMenu(item) {
+                    this.handTrackingTarget = item;
+                    this.startHandTracking();
+                },
+
                 startHandTracking() {
                     this.handTrackingModal = true;
                     this.isCameraLoading = true;
                     this.hasCameraError = false;
+                    this.cameraErrorMessage = '';
                     this.detectedFingers = 0;
+                    this.latestLandmarks = null;
+
+                    // 1. Check if browser supports mediaDevices and getUserMedia (secure context check)
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        console.error("Camera access not supported or blocked (insecure context/HTTP).");
+                        this.isCameraLoading = false;
+                        this.hasCameraError = true;
+                        this.cameraErrorMessage = "Browser Anda memblokir akses kamera. Gunakan HTTPS atau localhost untuk menjalankannya.";
+                        return;
+                    }
 
                     this.$nextTick(() => {
                         const videoElement = document.getElementById('hand-webcam');
@@ -772,32 +847,36 @@
 
                         if (!videoElement || !canvasElement) return;
 
-                        if (!this.handsDetector) {
-                            this.handsDetector = new Hands({
+                        if (!window.handsDetector) {
+                            const HandsConstructor = window.Hands || (typeof Hands !== 'undefined' ? Hands : null);
+                            if (!HandsConstructor) {
+                                console.error("MediaPipe Hands SDK is not loaded.");
+                                this.isCameraLoading = false;
+                                this.hasCameraError = true;
+                                this.cameraErrorMessage = "SDK MediaPipe Hands gagal dimuat dari CDN. Periksa koneksi internet Anda.";
+                                return;
+                            }
+
+                            // Use unpinned version matching the script tag
+                            window.handsDetector = new HandsConstructor({
                                 locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
                             });
 
-                            this.handsDetector.setOptions({
+                            window.handsDetector.setOptions({
                                 maxNumHands: 1,
                                 modelComplexity: 1,
                                 minDetectionConfidence: 0.6,
                                 minTrackingConfidence: 0.6
                             });
 
-                            this.handsDetector.onResults((results) => {
-                                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-                                canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
+                            window.handsDetector.onResults((results) => {
                                 let totalFingersUp = 0;
 
-                                if (results.multiHandLandmarks && results.multiHandIndices) {
+                                if (results.multiHandLandmarks) {
+                                    this.latestLandmarks = results.multiHandLandmarks;
+
                                     for (let index = 0; index < results.multiHandLandmarks.length; index++) {
                                         const landmarks = results.multiHandLandmarks[index];
-                                        
-                                        // Draw connectors & landmarks
-                                        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00e676', lineWidth: 4});
-                                        drawLandmarks(canvasCtx, landmarks, {color: '#ff3d00', lineWidth: 1, radius: 3});
-
                                         const fingerTips = [8, 12, 16, 20];
                                         fingerTips.forEach(tipId => {
                                             if (landmarks[tipId].y < landmarks[tipId - 2].y) {
@@ -805,48 +884,100 @@
                                             }
                                         });
 
-                                        const isLeftHand = results.multiHandedness[index].label === 'Left';
-                                        if (isLeftHand) {
-                                            if (landmarks[4].x > landmarks[3].x) totalFingersUp++;
-                                        } else {
-                                            if (landmarks[4].x < landmarks[3].x) totalFingersUp++;
+                                        if (results.multiHandedness && results.multiHandedness[index]) {
+                                            const isLeftHand = results.multiHandedness[index].label === 'Left';
+                                            if (isLeftHand) {
+                                                if (landmarks[4].x > landmarks[3].x) totalFingersUp++;
+                                            } else {
+                                                if (landmarks[4].x < landmarks[3].x) totalFingersUp++;
+                                            }
                                         }
                                     }
+                                } else {
+                                    this.latestLandmarks = null;
                                 }
                                 
                                 this.detectedFingers = totalFingersUp;
                             });
                         }
 
-                        this.cameraInstance = new Camera(videoElement, {
+                        const CameraConstructor = window.Camera || (typeof Camera !== 'undefined' ? Camera : null);
+                        if (!CameraConstructor) {
+                            console.error("MediaPipe Camera SDK is not loaded.");
+                            this.isCameraLoading = false;
+                            this.hasCameraError = true;
+                            this.cameraErrorMessage = "SDK MediaPipe Camera gagal dimuat dari CDN. Periksa koneksi internet Anda.";
+                            return;
+                        }
+
+                        let isProcessing = false;
+                        window.cameraInstance = new CameraConstructor(videoElement, {
                             onFrame: async () => {
-                                if (this.handTrackingModal) {
-                                    await this.handsDetector.send({image: videoElement});
-                                    this.isCameraLoading = false;
+                                if (!this.handTrackingModal) return;
+
+                                // 1. Draw raw video feed immediately (buttery smooth 30fps stream)
+                                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                                canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+                                // 2. Draw latest overlays if they exist
+                                if (this.latestLandmarks) {
+                                    const HandConnections = window.HAND_CONNECTIONS || (typeof HAND_CONNECTIONS !== 'undefined' ? HAND_CONNECTIONS : null);
+                                    const drawConnectorsFunc = window.drawConnectors || (typeof drawConnectors !== 'undefined' ? drawConnectors : null);
+                                    const drawLandmarksFunc = window.drawLandmarks || (typeof drawLandmarks !== 'undefined' ? drawLandmarks : null);
+
+                                    for (let index = 0; index < this.latestLandmarks.length; index++) {
+                                        const landmarks = this.latestLandmarks[index];
+                                        if (drawConnectorsFunc && HandConnections) {
+                                            drawConnectorsFunc(canvasCtx, landmarks, HandConnections, {color: '#00e676', lineWidth: 4});
+                                        }
+                                        if (drawLandmarksFunc) {
+                                            drawLandmarksFunc(canvasCtx, landmarks, {color: '#ff3d00', lineWidth: 1, radius: 3});
+                                        }
+                                    }
+                                }
+
+                                // 3. Run hands detection in background
+                                if (!isProcessing) {
+                                    isProcessing = true;
+                                    try {
+                                        await window.handsDetector.send({image: videoElement});
+                                    } catch (e) {
+                                        console.error("Hands detector send failed", e);
+                                        this.hasCameraError = true;
+                                        this.cameraErrorMessage = "AI Error: " + e.message;
+                                    }
+                                    isProcessing = false;
                                 }
                             },
                             width: 640,
                             height: 480
                         });
 
-                        this.cameraInstance.start()
+                        window.cameraInstance.start()
+                            .then(() => {
+                                // Camera started successfully. Hide loading overlay immediately.
+                                this.isCameraLoading = false;
+                            })
                             .catch(err => {
                                 console.error("Camera start failed", err);
                                 this.isCameraLoading = false;
                                 this.hasCameraError = true;
+                                this.cameraErrorMessage = "Gagal menyalakan kamera. Pastikan izin kamera telah diberikan di browser.";
                             });
                     });
                 },
 
                 stopHandTracking() {
                     this.handTrackingModal = false;
-                    if (this.cameraInstance) {
+                    this.handTrackingTarget = null;
+                    this.latestLandmarks = null;
+                    if (window.cameraInstance) {
                         try {
-                            this.cameraInstance.stop();
+                            window.cameraInstance.stop();
                         } catch (e) {
                             console.warn("Error stopping camera helper:", e);
                         }
-                        this.cameraInstance = null;
+                        window.cameraInstance = null;
                     }
                     // Release webcam stream manually
                     const videoElement = document.getElementById('hand-webcam');
@@ -860,7 +991,21 @@
 
                 useHandCount() {
                     if (this.detectedFingers > 0) {
-                        this.detailQty = this.detectedFingers;
+                        if (this.handTrackingTarget === 'detail') {
+                            this.detailQty = this.detectedFingers;
+                        } else if (this.handTrackingTarget && this.handTrackingTarget.id) {
+                            const target = this.handTrackingTarget;
+                            if (this.cartItems[target.id]) {
+                                this.cartItems[target.id].qty = this.detectedFingers;
+                            } else {
+                                this.cartItems[target.id] = {
+                                    name: target.name,
+                                    price: target.price,
+                                    qty: this.detectedFingers,
+                                    note: ''
+                                };
+                            }
+                        }
                     }
                     this.stopHandTracking();
                 }

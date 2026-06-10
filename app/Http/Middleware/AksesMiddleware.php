@@ -77,7 +77,7 @@ class AksesMiddleware
             $module = 'transaksi';
         } elseif ($request->is('users') || $request->is('users/*')) {
             $module = 'users';
-        } elseif ($request->is('karyawan') || $request->is('karyawan/*')) {
+        } elseif ($request->is('karyawan') || $request->is('karyawan/*') || $request->is('face-scan') || $request->is('face-scan/*')) {
             $module = 'karyawan';
         } elseif ($request->is('menu') || $request->is('menu/*')) {
             $module = 'menu';
@@ -85,8 +85,6 @@ class AksesMiddleware
             $module = 'kategori';
         } elseif ($request->is('meja') || $request->is('meja/*')) {
             $module = 'meja';
-        } elseif ($request->is('shift') || $request->is('shift/*')) {
-            $module = 'shift';
         } elseif ($request->is('akses') || $request->is('akses/*')) {
             $module = 'akses';
         } elseif ($request->is('log') || $request->is('log/*')) {

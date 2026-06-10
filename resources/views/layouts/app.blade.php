@@ -24,6 +24,7 @@
         }
         
         $roleName = $simUser ? $simUser->role->role : 'Guest';
+        $authUser = auth()->user();
         
         // Modules lists to render in sidebar
         $sidebarItems = [
@@ -31,6 +32,9 @@
             ['module' => 'laporan', 'route' => 'laporan', 'label' => 'Laporan Keuangan', 'icon' => 'document-report'],
             ['module' => 'transaksi', 'route' => 'transaksi', 'label' => 'Riwayat Transaksi', 'icon' => 'history'],
             ['module' => 'users', 'route' => 'users.index', 'label' => 'Kelola Users', 'icon' => 'users'],
+            ['module' => 'karyawan', 'route' => 'karyawan.index', 'label' => 'Kelola Karyawan', 'icon' => 'identification'],
+            ['module' => 'jabatan', 'route' => 'jabatan.index', 'label' => 'Kelola Jabatan', 'icon' => 'briefcase'],
+            ['module' => 'karyawan', 'route' => 'face-scan', 'label' => 'Presensi Wajah', 'icon' => 'camera'],
             ['module' => 'menu', 'route' => 'menu.index', 'label' => 'Kelola Menu', 'icon' => 'coffee'],
             ['module' => 'kategori', 'route' => 'kategori.index', 'label' => 'Kelola Kategori', 'icon' => 'tag'],
             ['module' => 'promo', 'route' => 'promo.index', 'label' => 'Kelola Promo', 'icon' => 'gift'],
@@ -117,6 +121,12 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                 @elseif($item['icon'] === 'office-building')
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                @elseif($item['icon'] === 'identification')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                                @elseif($item['icon'] === 'briefcase')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                @elseif($item['icon'] === 'camera')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
                                 @endif
                             </span>
                             <span class="truncate">{{ $item['label'] }}</span>
@@ -143,6 +153,30 @@
                     
                     <!-- Vertical Divider (only visible when clock is visible) -->
                     <div class="h-8 w-px bg-coffee-latte hidden md:block"></div>
+
+                    <!-- Role Switcher Dropdown (Only for Superadmin & Admin) -->
+                    @if($authUser && in_array($authUser->role->role, ['superadmin', 'admin']))
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center gap-1.5 px-3 py-1.5 bg-coffee-cream hover:bg-coffee-latte border border-coffee-light rounded-xl text-xs font-bold text-coffee-dark transition cursor-pointer select-none">
+                            <svg class="w-3.5 h-3.5 text-coffee-medium" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <span>Simulasi: {{ strtoupper($roleName) }}</span>
+                            <svg class="w-3 h-3 text-coffee-medium" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-52 bg-white border border-coffee-light rounded-2xl shadow-xl py-2 z-50 animate-fade-in" style="display: none;">
+                            <div class="px-4 py-1.5 border-b border-coffee-latte text-[9px] font-extrabold text-coffee-light uppercase tracking-wider mb-1">Pilih Role Simulasi</div>
+                            @php
+                                $rolesToSimulate = \App\Models\Role::all();
+                            @endphp
+                            @foreach($rolesToSimulate as $r)
+                                <a href="{{ route('simulate.role', $r->id_role) }}" class="block px-4 py-2 text-xs font-semibold text-coffee-dark hover:bg-coffee-cream transition {{ $roleName === $r->role ? 'bg-coffee-cream text-coffee-gold font-bold' : '' }}">
+                                    {{ strtoupper($r->role) }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    <!-- Small Vertical Divider -->
+                    <div class="h-6 w-px bg-coffee-latte"></div>
+                    @endif
 
                     <!-- User Profile & Logout -->
                     <div class="flex items-center gap-4">

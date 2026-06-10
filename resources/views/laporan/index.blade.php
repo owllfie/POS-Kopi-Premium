@@ -27,68 +27,6 @@
         </div>
     </div>
 
-    <!-- Filters Panel (Visible for POS Tab and Ledger Tab) -->
-    @if($tab === 'pos')
-        <form action="{{ route('laporan') }}" method="GET" class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end no-print">
-            <input type="hidden" name="tab" value="pos">
-            <div>
-                <label for="type" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Tipe Laporan</label>
-                <select name="type" id="type" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                    <option value="harian" {{ $type === 'harian' ? 'selected' : '' }}>Laporan Harian</option>
-                    <option value="mingguan" {{ $type === 'mingguan' ? 'selected' : '' }}>Laporan Mingguan</option>
-                    <option value="bulanan" {{ $type === 'bulanan' ? 'selected' : '' }}>Laporan Bulanan</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="date" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Tanggal Acuan</label>
-                <input 
-                    type="date" 
-                    name="date" 
-                    id="date" 
-                    value="{{ $dateStr }}"
-                    onchange="this.form.submit()"
-                    class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
-                >
-            </div>
-
-            <div>
-                <label for="kasir_id" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Kasir Petugas</label>
-                <select name="kasir_id" id="kasir_id" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                    <option value="semua" {{ $cashierId === 'semua' ? 'selected' : '' }}>Semua Kasir</option>
-                    @foreach($cashiers as $kasir)
-                        <option value="{{ $kasir->id_user }}" {{ $cashierId == $kasir->id_user ? 'selected' : '' }}>{{ $kasir->username }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label for="metode" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Metode Pembayaran</label>
-                <select name="metode" id="metode" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
-                    <option value="semua" {{ $paymentMethod === 'semua' ? 'selected' : '' }}>Semua Metode</option>
-                    <option value="cash" {{ $paymentMethod === 'cash' ? 'selected' : '' }}>CASH (Tunai)</option>
-                    <option value="qris" {{ $paymentMethod === 'qris' ? 'selected' : '' }}>QRIS (Non-Tunai)</option>
-                </select>
-            </div>
-        </form>
-    @else
-        <!-- Standard Date Filter for accounting reports -->
-        <form action="{{ route('laporan') }}" method="GET" class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card flex items-end gap-4 no-print max-w-sm">
-            <input type="hidden" name="tab" value="{{ $tab }}">
-            <div class="flex-grow">
-                <label for="date_acuan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Pilih Bulan & Tahun</label>
-                <input 
-                    type="date" 
-                    name="date" 
-                    id="date_acuan" 
-                    value="{{ $dateStr }}"
-                    onchange="this.form.submit()"
-                    class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white"
-                >
-            </div>
-        </form>
-    @endif
-
     <!-- Report Header Info -->
     <div class="flex items-center justify-between border-b border-coffee-latte pb-4">
         <div>
@@ -99,19 +37,29 @@
                 @if($tab === 'pos') {{ $reportTitle }} @else Periode Bulanan — {{ \Carbon\Carbon::parse($dateStr)->format('F Y') }} @endif
             </span>
         </div>
-        <div class="flex gap-2 no-print">
-            @if($tab === 'ledger')
-                <button @click="ledgerModal = true" class="px-4 py-2 bg-coffee-dark text-white rounded-xl text-xs font-bold hover:bg-coffee-medium transition shadow flex items-center gap-1.5 cursor-pointer">
-                    <svg class="w-4 h-4 text-coffee-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                    <span>Input Transaksi</span>
-                </button>
+        <div class="flex flex-col items-end gap-2 no-print">
+            @if($tab === 'pos')
+                <!-- 2 tabs: Mingguan, Bulanan -->
+                <div class="flex items-center gap-1 bg-coffee-cream/40 p-1 rounded-xl border border-coffee-latte">
+                    <a href="{{ route('laporan', ['tab' => $tab, 'type' => 'mingguan']) }}" class="px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition {{ $type === 'mingguan' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream' }}">Mingguan</a>
+                    <a href="{{ route('laporan', ['tab' => $tab, 'type' => 'bulanan']) }}" class="px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition {{ $type === 'bulanan' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream' }}">Bulanan</a>
+                </div>
             @endif
-            <button onclick="window.print()" class="px-4 py-2 border border-coffee-medium text-coffee-dark rounded-xl text-xs font-bold hover:bg-coffee-latte transition shadow flex items-center gap-2 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                <span>Cetak / PDF</span>
-            </button>
+            <div class="flex gap-2">
+                @if($tab === 'ledger')
+                    <button @click="ledgerModal = true" class="px-4 py-2 bg-coffee-dark text-white rounded-xl text-xs font-bold hover:bg-coffee-medium transition shadow flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4 text-coffee-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <span>Input Transaksi</span>
+                    </button>
+                @endif
+                <button onclick="window.print()" class="px-4 py-2 border border-coffee-medium text-coffee-dark rounded-xl text-xs font-bold hover:bg-coffee-latte transition shadow flex items-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Cetak / PDF</span>
+                </button>
+            </div>
         </div>
     </div>
+
 
     <!-- TAB 1: POS PERFORMANCE -->
     @if($tab === 'pos')
@@ -140,55 +88,20 @@
         </div>
 
         <!-- Chart -->
-        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-4 no-print">
-            <h4 class="font-bold text-coffee-dark">Grafik Performa Penjualan</h4>
-            @php
-                $maxVal = max($data) ?: 100000;
-                $svgHeight = 160;
-                $svgWidth = 500;
-                $padX = 45;
-                $padY = 20;
-                $chartH = $svgHeight - (2 * $padY);
-                $chartW = $svgWidth - (2 * $padX);
-                $count = count($data);
-                $colW = $chartW / ($count > 1 ? $count - 1 : 1);
-            @endphp
-            <div class="w-full">
-                <svg viewBox="0 0 500 180" class="w-full overflow-visible">
-                    @for($g = 0; $g <= 4; $g++)
-                        @php
-                            $yPos = $padY + ($chartH * ($g / 4));
-                            $gridVal = $maxVal * (1 - ($g / 4));
-                        @endphp
-                        <line x1="{{ $padX }}" y1="{{ $yPos }}" x2="{{ $svgWidth - $padX }}" y2="{{ $yPos }}" stroke="#EFEBE9" stroke-width="1" stroke-dasharray="4" />
-                        <text x="{{ $padX - 8 }}" y="{{ $yPos + 4 }}" font-size="9" fill="#8D6E63" font-weight="600" text-anchor="end">
-                            {{ $gridVal >= 1000 ? number_format($gridVal / 1000, 0) . 'k' : number_format($gridVal, 0) }}
-                        </text>
-                    @endfor
-                    @php $points = ''; @endphp
-                    @foreach($data as $index => $val)
-                        @php
-                            $barHeight = $maxVal > 0 ? ($val / $maxVal) * $chartH : 0;
-                            $x = $padX + ($index * $colW);
-                            $y = $svgHeight - $padY - $barHeight;
-                            $points .= "$x,$y ";
-                        @endphp
-                    @endforeach
-                    <polyline fill="none" stroke="#8D6E63" stroke-width="2.5" points="{{ trim($points) }}" />
-                    @foreach($data as $index => $val)
-                        @php
-                            $barHeight = $maxVal > 0 ? ($val / $maxVal) * $chartH : 0;
-                            $x = $padX + ($index * $colW);
-                            $y = $svgHeight - $padY - $barHeight;
-                        @endphp
-                        <circle cx="{{ $x }}" cy="{{ $y }}" r="4" fill="#3E2723" stroke="#D4AF37" stroke-width="1.5" cursor="pointer">
-                            <title>Rp {{ number_format($val, 0, ',', '.') }}</title>
-                        </circle>
-                        <text x="{{ $x }}" y="{{ $svgHeight - $padY + 14 }}" font-size="8" fill="#3E2723" font-weight="bold" text-anchor="middle">
-                            {{ $labels[$index] }}
-                        </text>
-                    @endforeach
-                </svg>
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card space-y-4 no-print" x-data="{ chartType: 'line' }">
+            <div class="flex items-center justify-between">
+                <h4 class="font-bold text-coffee-dark">Grafik Performa Penjualan</h4>
+                
+                <!-- Chart Type Selector -->
+                <div class="flex items-center gap-1 bg-coffee-cream/40 p-1 rounded-xl border border-coffee-latte no-print">
+                    <button type="button" @click="chartType = 'line'; changeChartType('line')" :class="chartType === 'line' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream'" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition">Line</button>
+                    <button type="button" @click="chartType = 'bar'; changeChartType('bar')" :class="chartType === 'bar' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream'" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition">Bar</button>
+                    <button type="button" @click="chartType = 'pie'; changeChartType('pie')" :class="chartType === 'pie' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream'" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition">Pie</button>
+                </div>
+            </div>
+
+            <div class="w-full relative min-h-[220px] flex items-center justify-center">
+                <canvas id="revenue-chart" class="w-full" style="max-height: 220px;"></canvas>
             </div>
         </div>
 
@@ -793,3 +706,131 @@
     }
 </style>
 @endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const chartEl = document.getElementById('revenue-chart');
+    if (!chartEl) return;
+    const ctx = chartEl.getContext('2d');
+    const labels = @json($labels ?? []);
+    const dataValues = @json($data ?? []);
+
+    // Coffee theme color palette
+    const coffeeColors = [
+        '#4A3531', '#5D4037', '#6D4C41', '#7D5748', 
+        '#8D6E63', '#A1887F', '#BCAAA4', '#D7CCC8'
+    ];
+
+    // Chart.js instance variable
+    let revenueChart = null;
+
+    window.changeChartType = function(type) {
+        if (revenueChart) {
+            revenueChart.destroy();
+        }
+
+        const isPie = type === 'pie';
+
+        // Set configuration based on chart type
+        let chartConfig = {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Performa Penjualan',
+                    data: dataValues,
+                    backgroundColor: isPie 
+                        ? coffeeColors.slice(0, dataValues.length) 
+                        : (type === 'bar' ? '#8D6E63' : 'rgba(141, 110, 99, 0.15)'),
+                    borderColor: isPie ? '#FFFFFF' : '#4A3531',
+                    borderWidth: isPie ? 2 : 3,
+                    tension: 0.4, // Curvy line like Google currency chart
+                    fill: type === 'line', // Fill under line chart
+                    pointBackgroundColor: '#4A3531',
+                    pointBorderColor: '#D4AF37',
+                    pointBorderWidth: 2,
+                    pointRadius: type === 'line' ? 5 : 0,
+                    pointHoverRadius: type === 'line' ? 7 : 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: isPie, // Only show legend for Pie chart
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                family: 'Outfit',
+                                size: 10,
+                                weight: 'bold'
+                            },
+                            color: '#3E2723'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== undefined) {
+                                    label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                } else if (context.parsed !== undefined) {
+                                    label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: isPie ? {} : {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#EFEBE9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 100000,
+                            font: {
+                                family: 'Outfit',
+                                size: 9,
+                                weight: '600'
+                            },
+                            color: '#8D6E63',
+                            callback: function(value) {
+                                return value >= 1000 ? (value / 1000) + 'k' : value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Outfit',
+                                size: 9,
+                                weight: 'bold'
+                            },
+                            color: '#3E2723'
+                        }
+                    }
+                }
+            }
+        };
+
+        revenueChart = new Chart(ctx, chartConfig);
+    };
+
+    // Initialize with default chart type 'line'
+    changeChartType('line');
+});
+</script>
+@endsection
+

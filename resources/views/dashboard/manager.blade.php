@@ -55,68 +55,21 @@
 
     <!-- Chart & Quick Nav Row -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- SVG Line Trend Chart -->
-        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card lg:col-span-2 space-y-4">
+        <!-- Chart -->
+        <div class="bg-white rounded-2xl border border-coffee-latte p-6 coffee-card lg:col-span-2 space-y-4" x-data="{ chartType: 'line' }">
             <div class="flex items-center justify-between">
                 <h4 class="font-bold text-coffee-dark">Tren Omset (Harian)</h4>
-                <div class="flex items-center gap-1.5 text-xs font-bold text-coffee-light">
-                    <span class="w-2 h-2 rounded-full bg-coffee-gold"></span>
-                    <span>Bulan Berjalan</span>
+                
+                <!-- Chart Type Selector -->
+                <div class="flex items-center gap-1 bg-coffee-cream/40 p-1 rounded-xl border border-coffee-latte no-print">
+                    <button type="button" @click="chartType = 'line'; changeChartType('line')" :class="chartType === 'line' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream'" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition">Line</button>
+                    <button type="button" @click="chartType = 'bar'; changeChartType('bar')" :class="chartType === 'bar' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream'" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition">Bar</button>
+                    <button type="button" @click="chartType = 'pie'; changeChartType('pie')" :class="chartType === 'pie' ? 'bg-coffee-dark text-white shadow-sm' : 'text-coffee-light hover:bg-coffee-cream'" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition">Pie</button>
                 </div>
             </div>
 
-            @php
-                $maxVal = max($chartData) ?: 50000;
-                $svgHeight = 160;
-                $svgWidth = 500;
-                $padX = 40;
-                $padY = 20;
-                $chartH = $svgHeight - (2 * $padY);
-                $chartW = $svgWidth - (2 * $padX);
-                $count = count($chartData);
-                $colW = $chartW / ($count > 1 ? $count - 1 : 1);
-            @endphp
-            <div class="w-full">
-                <svg viewBox="0 0 500 180" class="w-full overflow-visible">
-                    <!-- Grid lines -->
-                    @for($g = 0; $g <= 4; $g++)
-                        @php
-                            $yPos = $padY + ($chartH * ($g / 4));
-                            $gridVal = $maxVal * (1 - ($g / 4));
-                        @endphp
-                        <line x1="{{ $padX }}" y1="{{ $yPos }}" x2="{{ $svgWidth - $padX }}" y2="{{ $yPos }}" stroke="#EFEBE9" stroke-width="1" stroke-dasharray="4" />
-                        <text x="{{ $padX - 8 }}" y="{{ $yPos + 4 }}" font-size="9" fill="#8D6E63" font-weight="600" text-anchor="end">
-                            {{ $gridVal >= 1000 ? number_format($gridVal / 1000, 0) . 'k' : number_format($gridVal, 0) }}
-                        </text>
-                    @endfor
-
-                    <!-- Line path -->
-                    @php $points = ''; @endphp
-                    @foreach($chartData as $index => $val)
-                        @php
-                            $barHeight = $maxVal > 0 ? ($val / $maxVal) * $chartH : 0;
-                            $x = $padX + ($index * $colW);
-                            $y = $svgHeight - $padY - $barHeight;
-                            $points .= "$x,$y ";
-                        @endphp
-                    @endforeach
-                    <polyline fill="none" stroke="#8D6E63" stroke-width="3" points="{{ trim($points) }}" />
-
-                    <!-- Points -->
-                    @foreach($chartData as $index => $val)
-                        @php
-                            $barHeight = $maxVal > 0 ? ($val / $maxVal) * $chartH : 0;
-                            $x = $padX + ($index * $colW);
-                            $y = $svgHeight - $padY - $barHeight;
-                        @endphp
-                        <circle cx="{{ $x }}" cy="{{ $y }}" r="5" fill="#3E2723" stroke="#D4AF37" stroke-width="1.5" cursor="pointer">
-                            <title>Rp {{ number_format($val, 0, ',', '.') }}</title>
-                        </circle>
-                        <text x="{{ $x }}" y="{{ $svgHeight - $padY + 14 }}" font-size="9" fill="#3E2723" font-weight="bold" text-anchor="middle">
-                            {{ $chartLabels[$index] }}
-                        </text>
-                    @endforeach
-                </svg>
+            <div class="w-full relative min-h-[220px] flex items-center justify-center">
+                <canvas id="revenue-chart" class="w-full" style="max-height: 220px;"></canvas>
             </div>
         </div>
 
@@ -278,4 +231,129 @@
     @endif
 
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('revenue-chart').getContext('2d');
+    const labels = @json($chartLabels);
+    const dataValues = @json($chartData);
+
+    // Coffee theme color palette
+    const coffeeColors = [
+        '#4A3531', '#5D4037', '#6D4C41', '#7D5748', 
+        '#8D6E63', '#A1887F', '#BCAAA4', '#D7CCC8'
+    ];
+
+    // Chart.js instance variable
+    let revenueChart = null;
+
+    window.changeChartType = function(type) {
+        if (revenueChart) {
+            revenueChart.destroy();
+        }
+
+        const isPie = type === 'pie';
+
+        // Set configuration based on chart type
+        let chartConfig = {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Omset',
+                    data: dataValues,
+                    backgroundColor: isPie 
+                        ? coffeeColors.slice(0, dataValues.length) 
+                        : (type === 'bar' ? '#8D6E63' : 'rgba(141, 110, 99, 0.15)'),
+                    borderColor: isPie ? '#FFFFFF' : '#4A3531',
+                    borderWidth: isPie ? 2 : 3,
+                    tension: 0.4, // Curvy line like Google currency chart
+                    fill: type === 'line', // Fill under line chart
+                    pointBackgroundColor: '#4A3531',
+                    pointBorderColor: '#D4AF37',
+                    pointBorderWidth: 2,
+                    pointRadius: type === 'line' ? 5 : 0,
+                    pointHoverRadius: type === 'line' ? 7 : 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: isPie, // Only show legend for Pie chart
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                family: 'Outfit',
+                                size: 10,
+                                weight: 'bold'
+                            },
+                            color: '#3E2723'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== undefined) {
+                                    label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                } else if (context.parsed !== undefined) {
+                                    label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: isPie ? {} : {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#EFEBE9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 100000,
+                            font: {
+                                family: 'Outfit',
+                                size: 9,
+                                weight: '600'
+                            },
+                            color: '#8D6E63',
+                            callback: function(value) {
+                                return value >= 1000 ? (value / 1000) + 'k' : value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Outfit',
+                                size: 9,
+                                weight: 'bold'
+                            },
+                            color: '#3E2723'
+                        }
+                    }
+                }
+            }
+        };
+
+        revenueChart = new Chart(ctx, chartConfig);
+    };
+
+    // Initialize with default chart type 'line'
+    changeChartType('line');
+});
+</script>
 @endsection

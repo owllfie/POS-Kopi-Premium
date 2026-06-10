@@ -24,7 +24,10 @@ class ReportController extends Controller
 
     public function index(Request $request)
     {
-        $type = $request->input('type', 'harian');
+        $type = $request->input('type', 'mingguan');
+        if ($type === 'harian') {
+            $type = 'mingguan';
+        }
         $dateStr = $request->input('date', Carbon::today()->format('Y-m-d'));
         $cashierId = $request->input('kasir_id', 'semua');
         $paymentMethod = $request->input('metode', 'semua');
@@ -87,16 +90,27 @@ class ReportController extends Controller
             $posQuery->whereBetween('created_at', [$start, $end]);
             $reportTitle = "Laporan Bulanan — " . $date->format('F Y');
             
-            for ($w = 1; $w <= 4; $w++) {
-                $labels[] = "Minggu $w";
-                $weekStart = $start->copy()->addWeeks($w - 1)->startOfDay();
-                $weekEnd = $w === 4 ? $end->copy()->endOfDay() : $start->copy()->addWeeks($w)->subSecond()->endOfDay();
+            $current = $start->copy();
+            $todayLimit = Carbon::today()->endOfDay();
+            while ($current->lte($end)) {
+                $weekStart = $current->copy()->startOfDay();
+                if ($weekStart->gt($todayLimit)) {
+                    break;
+                }
+                $weekEnd = $current->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+                if ($weekEnd->gt($end)) {
+                    $weekEnd = $end->copy()->endOfDay();
+                }
+                
+                $labels[] = $weekStart->format('d M') . ' - ' . $weekEnd->format('d M');
                 
                 $weeklyQuery = Pesanan::whereBetween('created_at', [$weekStart, $weekEnd]);
                 if ($cashierId !== 'semua') $weeklyQuery->where('id_user', $cashierId);
                 if ($paymentMethod !== 'semua') $weeklyQuery->where('metode_pembayaran', $paymentMethod);
                 
                 $data[] = $weeklyQuery->sum('total_bayar');
+                
+                $current = $weekEnd->copy()->addDay()->startOfDay();
             }
         }
 

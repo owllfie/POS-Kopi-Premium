@@ -14,27 +14,27 @@ class KaryawanSeeder extends Seeder
     {
         $data = [
             // Kasir (3)
-            ['nama_karyawan' => 'Budi Santoso', 'pekerjaan' => 'Kasir', 'gaji' => 3500000],
-            ['nama_karyawan' => 'Siti Aminah', 'pekerjaan' => 'Kasir', 'gaji' => 3500000],
-            ['nama_karyawan' => 'Rizky Pratama', 'pekerjaan' => 'Kasir', 'gaji' => 3500000],
+            ['nama_karyawan' => 'Budi Santoso', 'pekerjaan' => 'Kasir', 'gaji' => 2500000],
+            ['nama_karyawan' => 'Siti Aminah', 'pekerjaan' => 'Kasir', 'gaji' => 2500000],
+            ['nama_karyawan' => 'Rizky Pratama', 'pekerjaan' => 'Kasir', 'gaji' => 2500000],
             
             // Chef (3)
-            ['nama_karyawan' => 'Agus Wijaya', 'pekerjaan' => 'Chef', 'gaji' => 5500000],
-            ['nama_karyawan' => 'Dewi Lestari', 'pekerjaan' => 'Chef', 'gaji' => 5500000],
-            ['nama_karyawan' => 'Bambang Pamungkas', 'pekerjaan' => 'Chef', 'gaji' => 5500000],
+            ['nama_karyawan' => 'Agus Wijaya', 'pekerjaan' => 'Chef', 'gaji' => 2500000],
+            ['nama_karyawan' => 'Dewi Lestari', 'pekerjaan' => 'Chef', 'gaji' => 2500000],
+            ['nama_karyawan' => 'Bambang Pamungkas', 'pekerjaan' => 'Chef', 'gaji' => 2500000],
             
             // Leader Kasir (1)
             ['nama_karyawan' => 'Hendra Setiawan', 'pekerjaan' => 'Leader Kasir', 'gaji' => 4500000],
             
             // Manager (1)
-            ['nama_karyawan' => 'Andi Wijaya', 'pekerjaan' => 'Manager', 'gaji' => 7000000],
+            ['nama_karyawan' => 'Andi Wijaya', 'pekerjaan' => 'Manager', 'gaji' => 3000000],
             
             // Waiter (2)
-            ['nama_karyawan' => 'Fitri Handayani', 'pekerjaan' => 'Waiter', 'gaji' => 3200000],
-            ['nama_karyawan' => 'Eko Prasetyo', 'pekerjaan' => 'Waiter', 'gaji' => 3200000],
+            ['nama_karyawan' => 'Fitri Handayani', 'pekerjaan' => 'Waiter', 'gaji' => 2500000],
+            ['nama_karyawan' => 'Eko Prasetyo', 'pekerjaan' => 'Waiter', 'gaji' => 2500000],
             
             // Cleaning Service (1)
-            ['nama_karyawan' => 'Supriyanto', 'pekerjaan' => 'Cleaning Service', 'gaji' => 3000000],
+            ['nama_karyawan' => 'Supriyanto', 'pekerjaan' => 'Cleaning Service', 'gaji' => 1000000],
             
             // Stock Keeper (2)
             ['nama_karyawan' => 'Ahmad Fauzi', 'pekerjaan' => 'Stock Keeper', 'gaji' => 3500000],

@@ -106,7 +106,7 @@ class DatabaseSeeder extends Seeder
         }
  
         // Admin gets CRUDs and Operations, but not system configs
-        $adminAllowed = ['dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 'users', 'menu', 'kategori', 'meja', 'shift', 'bahan_alat', 'properti', 'karyawan'];
+        $adminAllowed = ['dashboard', 'pesanan', 'bayar', 'laporan', 'transaksi', 'users', 'menu', 'kategori', 'meja', 'shift', 'bahan_alat', 'properti', 'karyawan', 'jabatan', 'promo'];
         foreach ($modules as $mod) {
             $allowed = in_array($mod, $adminAllowed) ? '1' : '0';
             Aksess::create(['id_role' => 2, 'modul' => $mod, 'allowed' => $allowed]);

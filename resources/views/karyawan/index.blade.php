@@ -35,6 +35,7 @@
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="border-b border-coffee-latte text-xs font-bold text-coffee-light uppercase tracking-wider">
+                            <th class="pb-3 w-16">Foto</th>
                             <th class="pb-3">Nama Karyawan</th>
                             <th class="pb-3">Jabatan</th>
                             <th class="pb-3">Gaji Bulanan</th>
@@ -44,6 +45,17 @@
                     <tbody class="divide-y divide-coffee-latte font-medium text-coffee-dark">
                         @forelse($karyawans as $k)
                             <tr>
+                                <td class="py-3.5">
+                                    <div class="w-10 h-10 rounded-xl bg-coffee-latte flex items-center justify-center overflow-hidden border border-coffee-latte/30 shadow-inner">
+                                        @if($k->foto)
+                                            <img src="{{ asset($k->foto) }}" alt="{{ $k->nama_karyawan }}" class="w-full h-full object-cover">
+                                        @else
+                                            <svg class="w-5 h-5 text-coffee-light" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td class="py-3.5 font-bold text-coffee-dark">{{ $k->nama_karyawan }}</td>
                                 <td class="py-3.5 text-xs">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider bg-amber-50 border-amber-200 text-coffee-light">
@@ -82,7 +94,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="py-8 text-center text-coffee-light font-medium">Tidak ada data karyawan.</td>
+                                <td colspan="5" class="py-8 text-center text-coffee-light font-medium">Tidak ada data karyawan.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -165,7 +177,7 @@
                     <h3 class="font-extrabold text-coffee-dark">Registrasi Karyawan Baru</h3>
                 </div>
 
-                <form action="{{ route('karyawan.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('karyawan.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                     @csrf
                     <div>
                         <label for="nama_karyawan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Nama Karyawan</label>
@@ -189,6 +201,11 @@
                             <input type="text" x-model="addGajiFormatted" @input="addGajiRaw = addGajiFormatted.replace(/[^0-9]/g, ''); addGajiFormatted = formatRupiahHelper(addGajiRaw)" required class="w-full px-4 py-2.5 text-xs font-bold text-coffee-dark focus:outline-none bg-white" placeholder="0">
                             <input type="hidden" name="gaji" :value="addGajiRaw">
                         </div>
+                    </div>
+
+                    <div>
+                        <label for="foto" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Foto Karyawan</label>
+                        <input type="file" name="foto" id="foto" accept="image/*" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
                     </div>
 
                     <div class="flex gap-3 pt-2">
@@ -217,7 +234,7 @@
                     <button @click="editModal = false" class="text-coffee-light hover:text-coffee-dark font-bold text-xs">Tutup</button>
                 </div>
 
-                <form :action="`{{ url('/karyawan/update') }}/${editKaryawan.id_karyawan}`" method="POST" class="space-y-4">
+                <form :action="`{{ url('/karyawan/update') }}/${editKaryawan.id_karyawan}`" method="POST" enctype="multipart/form-data" class="space-y-4">
                     @csrf
                     <div>
                         <label for="edit_nama_karyawan" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Nama Karyawan</label>
@@ -240,6 +257,11 @@
                             <input type="text" x-model="editGajiFormatted" @input="editGajiRaw = editGajiFormatted.replace(/[^0-9]/g, ''); editGajiFormatted = formatRupiahHelper(editGajiRaw)" required class="w-full px-4 py-2.5 text-xs font-bold text-coffee-dark focus:outline-none bg-white">
                             <input type="hidden" name="gaji" :value="editGajiRaw">
                         </div>
+                    </div>
+
+                    <div>
+                        <label for="edit_foto" class="block text-xs font-bold text-coffee-medium uppercase tracking-wider mb-2">Foto Karyawan (Biarkan kosong jika tidak diubah)</label>
+                        <input type="file" name="foto" id="edit_foto" accept="image/*" class="w-full px-4 py-2.5 rounded-xl border border-coffee-latte text-xs font-bold text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-light/50 bg-white">
                     </div>
 
                     <div class="flex gap-3 pt-2">

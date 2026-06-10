@@ -18,6 +18,7 @@ class Karyawan extends Model
         'id_jabatan',
         'pekerjaan',
         'gaji',
+        'foto',
     ];
 
     public function jabatan()

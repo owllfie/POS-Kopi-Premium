@@ -26,12 +26,12 @@ return new class extends Migration
 
         // 2. Populate default positions (jabatan)
         $defaultPositions = [
-            ['nama_jabatan' => 'Kasir', 'gaji_standar' => 3000000, 'deskripsi' => 'Melayani transaksi pembayaran kasir restoran', 'created_at' => now(), 'updated_at' => now()],
+            ['nama_jabatan' => 'Kasir', 'gaji_standar' => 2500000, 'deskripsi' => 'Melayani transaksi pembayaran kasir restoran', 'created_at' => now(), 'updated_at' => now()],
             ['nama_jabatan' => 'Leader Kasir', 'gaji_standar' => 4000000, 'deskripsi' => 'Supervisi kasir dan verifikasi shift keuangan', 'created_at' => now(), 'updated_at' => now()],
-            ['nama_jabatan' => 'Manager', 'gaji_standar' => 6500000, 'deskripsi' => 'Manajemen operasional cafe dan keuangan', 'created_at' => now(), 'updated_at' => now()],
-            ['nama_jabatan' => 'Cleaning Service', 'gaji_standar' => 2500000, 'deskripsi' => 'Menjaga kebersihan dan kenyamanan restoran', 'created_at' => now(), 'updated_at' => now()],
-            ['nama_jabatan' => 'Waiter', 'gaji_standar' => 2800000, 'deskripsi' => 'Melayani pesanan pelanggan di meja makan', 'created_at' => now(), 'updated_at' => now()],
-            ['nama_jabatan' => 'Chef', 'gaji_standar' => 4500000, 'deskripsi' => 'Mengolah masakan di dapur utama', 'created_at' => now(), 'updated_at' => now()],
+            ['nama_jabatan' => 'Manager', 'gaji_standar' => 3000000, 'deskripsi' => 'Manajemen operasional cafe dan keuangan', 'created_at' => now(), 'updated_at' => now()],
+            ['nama_jabatan' => 'Cleaning Service', 'gaji_standar' => 1000000, 'deskripsi' => 'Menjaga kebersihan dan kenyamanan restoran', 'created_at' => now(), 'updated_at' => now()],
+            ['nama_jabatan' => 'Waiter', 'gaji_standar' => 2500000, 'deskripsi' => 'Melayani pesanan pelanggan di meja makan', 'created_at' => now(), 'updated_at' => now()],
+            ['nama_jabatan' => 'Chef', 'gaji_standar' => 2500000, 'deskripsi' => 'Mengolah masakan di dapur utama', 'created_at' => now(), 'updated_at' => now()],
             ['nama_jabatan' => 'Stock Keeper', 'gaji_standar' => 3200000, 'deskripsi' => 'Pengawasan stok gudang dan logistik', 'created_at' => now(), 'updated_at' => now()],
         ];
 
