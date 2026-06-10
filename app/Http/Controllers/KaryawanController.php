@@ -166,4 +166,49 @@ class KaryawanController extends Controller
         $karyawans = Karyawan::whereNotNull('foto')->with('jabatan')->get();
         return view('karyawan.face_scan', compact('karyawans'));
     }
+
+    public function absen(Request $request)
+    {
+        $request->validate([
+            'id_karyawan' => 'required|integer|exists:karyawan,id_karyawan',
+        ]);
+
+        $id_karyawan = $request->id_karyawan;
+        $today = now()->toDateString(); // YYYY-MM-DD
+
+        // Check if employee has already clocked in today
+        $alreadyCheckedIn = \App\Models\Absensi::where('id_karyawan', $id_karyawan)
+            ->where('tanggal', $today)
+            ->exists();
+
+        if ($alreadyCheckedIn) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda sudah melakukan presensi hari ini!',
+            ], 422);
+        }
+
+        // Create new attendance record
+        $absensi = \App\Models\Absensi::create([
+            'id_karyawan' => $id_karyawan,
+            'tanggal' => $today,
+            'waktu_masuk' => now()->toTimeString(), // HH:MM:SS
+            'status' => 'Hadir',
+        ]);
+
+        // Log activity
+        $karyawan = Karyawan::find($id_karyawan);
+        ActivityLog::create([
+            'id_user' => null, // Presensi via pemindai wajah (otomatis)
+            'aktivitas' => 'PRESENSI_KARYAWAN',
+            'detail_aktivitas' => "Karyawan {$karyawan->nama_karyawan} berhasil melakukan presensi via wajah pada pukul {$absensi->waktu_masuk}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Presensi berhasil dicatat untuk {$karyawan->nama_karyawan}!",
+            'data' => $absensi,
+        ]);
+    }
 }

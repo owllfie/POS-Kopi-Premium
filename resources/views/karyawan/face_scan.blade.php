@@ -111,7 +111,7 @@
                 <div x-show="matchedEmployee && matchedEmployee !== 'unknown' && !isLoadingModels" class="space-y-6">
                     <div class="text-center pb-4 border-b border-coffee-latte">
                         <div class="relative w-28 h-28 mx-auto rounded-2xl overflow-hidden border-4 border-coffee-medium shadow-md">
-                            <img :src="'/' + matchedEmployee.foto" alt="Profile" class="w-full h-full object-cover animate-fade-in">
+                            <img :src="'{{ asset("") }}'.replace(/\/$/, '') + '/' + matchedEmployee.foto.replace(/^\//, '')" alt="Profile" class="w-full h-full object-cover animate-fade-in">
                         </div>
                         <div class="inline-block mt-3 px-3 py-1 bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-[10px] rounded-full uppercase tracking-wider">
                             Match: <span x-text="matchConfidence"></span>% Cocok
@@ -127,17 +127,25 @@
                             <span class="text-coffee-light font-medium uppercase tracking-wide">Jabatan / Pekerjaan</span>
                             <span class="px-2 py-0.5 bg-amber-50 border border-amber-200 text-coffee-medium rounded text-[10px] font-bold uppercase tracking-wider" x-text="matchedEmployee.pekerjaan"></span>
                         </div>
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="text-coffee-light font-medium uppercase tracking-wide">Gaji Bulanan</span>
-                            <span class="text-coffee-medium font-bold" x-text="formatRupiah(matchedEmployee.gaji)"></span>
-                        </div>
                     </div>
-
-                    <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 flex items-center gap-2.5 text-xs font-semibold">
+                    <!-- Status Presensi -->
+                    <div x-show="absenStatus === 'success'" class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 flex items-center gap-2.5 text-xs font-semibold">
                         <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <span>Presensi Sukses Diverifikasi!</span>
+                        <span x-text="absenMessage"></span>
+                    </div>
+                    
+                    <div x-show="absenStatus === 'error'" class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-800 flex items-center gap-2.5 text-xs font-semibold">
+                        <svg class="w-5 h-5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"/>
+                        </svg>
+                        <span x-text="absenMessage"></span>
+                    </div>
+
+                    <div x-show="isSubmittingAbsen" class="p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-800 flex items-center gap-2.5 text-xs font-semibold">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500 flex-shrink-0"></div>
+                        <span>Mengirim data presensi...</span>
                     </div>
                 </div>
 
@@ -204,6 +212,12 @@
             faceMatcher: null,
             stream: null,
             scanInterval: null,
+            isSubmittingAbsen: false,
+            distanceThreshold: 0.7, // Custom distance threshold set to 0.7
+            absenMessage: '',
+            absenStatus: null,
+            lastCheckedEmployeeId: null,
+            lastCheckedTime: 0,
 
             init() {
                 this.addLog("Aplikasi pemindai wajah siap.");
@@ -239,7 +253,7 @@
                     this.addLog("Memuat model pengenalan/vektor wajah...");
                     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
 
-                    this.addLog("Semua model AI ringan berhasil dimuat.");
+                    this.addLog("Semua model AI berhasil dimuat.");
                     
                     // Warm up TensorFlow.js to compile shaders before processing photos
                     this.loadingStep = 'Menghangatkan Mesin AI...';
@@ -278,7 +292,8 @@
                             // Run the image fetch and face detection inside a 6-second timeout race
                             const detections = await Promise.race([
                                 (async () => {
-                                    const imgUrl = '/' + emp.foto;
+                                    const baseUrl = '{{ asset("") }}'.replace(/\/$/, '');
+                                    const imgUrl = baseUrl + '/' + emp.foto.replace(/^\//, '');
                                     
                                     // Use browser's native Image loader (avoids fetch() CORS & cache resolution delays)
                                     const img = await new Promise((resolve, reject) => {
@@ -288,15 +303,9 @@
                                         i.src = imgUrl;
                                     });
                                     
-                                    // Draw onto a small 160x160 offscreen canvas.
-                                    // This reduces pixel count by up to 99%, making detection instant and memory-efficient.
-                                    const canvas = document.createElement('canvas');
-                                    canvas.width = 160;
-                                    canvas.height = 160;
-                                    const ctx = canvas.getContext('2d');
-                                    ctx.drawImage(img, 0, 0, 160, 160);
-                                    
-                                    return await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.3 }))
+                                    // Detect face directly on the loaded image without squashing/distorting the aspect ratio.
+                                    // Using TinyFaceDetector with inputSize 224 as requested.
+                                    return await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }))
                                         .withFaceLandmarks()
                                         .withFaceDescriptor();
                                 })(),
@@ -308,7 +317,6 @@
                                     id: emp.id_karyawan,
                                     name: emp.nama_karyawan,
                                     pekerjaan: emp.jabatan ? emp.jabatan.nama_jabatan : emp.pekerjaan,
-                                    gaji: emp.gaji,
                                     foto: emp.foto
                                 };
                                 this.labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(
@@ -325,7 +333,7 @@
                     }
 
                     if (this.labeledDescriptors.length > 0) {
-                        this.faceMatcher = new faceapi.FaceMatcher(this.labeledDescriptors, 0.68); // 0.68 distance threshold (more forgiving for TinyFaceDetector)
+                        this.faceMatcher = new faceapi.FaceMatcher(this.labeledDescriptors, this.distanceThreshold);
                         this.addLog("Penilai kemiripan wajah (FaceMatcher) terinisialisasi.");
                     } else {
                         this.addLog("Error: Tidak ada wajah karyawan terdaftar yang valid.");
@@ -426,7 +434,7 @@
                         canvas.height = displaySize.height;
                     }
 
-                    // Detect single face using lightweight TinyFaceDetector (inputSize 224 is fast, but much better at distance/details)
+                    // Detect single face using TinyFaceDetector with inputSize 224 as requested
                     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }))
                         .withFaceLandmarks()
                         .withFaceDescriptor();
@@ -444,11 +452,25 @@
                         const distance = bestMatch.distance;
                         this.matchConfidence = Math.round((1 - distance) * 100);
 
-                        if (bestMatch.label !== 'unknown') {
+                        if (bestMatch.label !== 'unknown' && this.matchConfidence >= 70) {
                             try {
                                 const empData = JSON.parse(bestMatch.label);
-                                this.matchedEmployee = empData;
-                                this.addLog(`Wajah dikenali sebagai: ${empData.name} (${this.matchConfidence}% Cocok, Jarak: ${distance.toFixed(2)})`);
+                                const isNewEmployee = !this.matchedEmployee || this.matchedEmployee.id !== empData.id;
+                                const isThrottleExpired = Date.now() - this.lastCheckedTime > 10000;
+
+                                if (isNewEmployee || isThrottleExpired) {
+                                    this.matchedEmployee = empData;
+                                    this.addLog(`Wajah dikenali sebagai: ${empData.name} (${this.matchConfidence}% Cocok, Jarak: ${distance.toFixed(2)})`);
+
+                                    if (isNewEmployee) {
+                                        this.absenStatus = null;
+                                        this.absenMessage = '';
+                                    }
+
+                                    if (!this.isSubmittingAbsen && this.lastCheckedEmployeeId !== empData.id) {
+                                        this.submitAbsen(empData.id);
+                                    }
+                                }
                             } catch (e) {
                                 this.addLog("Gagal memparsing data wajah terdeteksi.");
                             }
@@ -462,10 +484,15 @@
                                     closestName = JSON.parse(bestMatch.label).name;
                                 } catch(e) {}
                             }
-                            this.addLog(`Wajah terdeteksi tetapi tidak dikenal. Paling mendekati: ${closestName} (Jarak: ${distance.toFixed(2)}, butuh < 0.68)`);
+                            this.addLog(`Wajah terdeteksi tetapi tidak dikenal. Paling mendekati: ${closestName} (Cocok: ${this.matchConfidence}%, butuh >= 70%)`);
                         }
                     } else {
-                        this.matchedEmployee = null;
+                        // Clear match info when face leaves camera after a few seconds
+                        if (!this.isSubmittingAbsen && (!this.absenStatus || Date.now() - this.lastCheckedTime > 5000)) {
+                            this.matchedEmployee = null;
+                            this.absenStatus = null;
+                            this.absenMessage = '';
+                        }
                     }
                 } catch (e) {
                     console.error("Face scan execution error:", e);
@@ -474,9 +501,45 @@
                 }
             },
 
-            formatRupiah(amount) {
-                if (!amount) return 'Rp 0';
-                return 'Rp ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            async submitAbsen(employeeId) {
+                this.isSubmittingAbsen = true;
+                this.absenStatus = null;
+                this.absenMessage = '';
+                this.addLog(`Mengirim data presensi ke server...`);
+                
+                try {
+                    const response = await fetch('{{ route("face-scan.absen") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            id_karyawan: employeeId
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    this.lastCheckedEmployeeId = employeeId;
+                    this.lastCheckedTime = Date.now();
+                    
+                    if (response.ok) {
+                        this.absenStatus = 'success';
+                        this.absenMessage = result.message;
+                        this.addLog(`[Server] ${result.message}`);
+                    } else {
+                        this.absenStatus = 'error';
+                        this.absenMessage = result.message || 'Gagal merekam presensi.';
+                        this.addLog(`[Server] Gagal: ${this.absenMessage}`);
+                    }
+                } catch (error) {
+                    this.absenStatus = 'error';
+                    this.absenMessage = 'Koneksi ke server terputus.';
+                    this.addLog(`[Error] Gagal mengirim presensi: ${error.message}`);
+                } finally {
+                    this.isSubmittingAbsen = false;
+                }
             }
         };
     }

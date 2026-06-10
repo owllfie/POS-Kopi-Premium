@@ -109,7 +109,7 @@
                             >
                                 <div class="w-full aspect-square bg-coffee-cream rounded-md overflow-hidden mb-1 border border-coffee-latte/50">
                                     <template x-if="menu.foto">
-                                        <img :src="'/' + menu.foto" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                        <img :src="'{{ asset("") }}'.replace(/\/$/, '') + '/' + menu.foto.replace(/^\//, '')" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                                     </template>
                                     <template x-if="!menu.foto">
                                         <div class="w-full h-full flex items-center justify-center text-coffee-light">

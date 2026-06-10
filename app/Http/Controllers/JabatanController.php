@@ -20,17 +20,25 @@ class JabatanController extends Controller
 
     public function index(Request $request)
     {
-        $viewTrash = $request->input('trash', '0') === '1';
+        $tab = $request->input('tab', 'active');
+        if ($request->input('trash') === '1') {
+            $tab = 'trash';
+        }
 
         $query = Jabatan::query();
 
-        if ($viewTrash) {
+        if ($tab === 'trash') {
             $query->onlyTrashed();
         }
 
         $jabatans = $query->orderBy('nama_jabatan', 'asc')->paginate(10)->withQueryString();
 
-        return view('jabatan.index', compact('jabatans', 'viewTrash'));
+        $historyUpdates = \App\Models\HistoryUpdate::where('table', 'jabatan')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('jabatan.index', compact('jabatans', 'tab', 'historyUpdates'));
     }
 
     public function store(Request $request)

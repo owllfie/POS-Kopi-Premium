@@ -119,6 +119,7 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
 });
 
 Route::get('/face-scan', [KaryawanController::class, 'faceScan'])->name('face-scan');
+Route::post('/face-scan/absen', [KaryawanController::class, 'absen'])->name('face-scan.absen');
 
 Route::prefix('jabatan')->name('jabatan.')->group(function () {
     Route::get('/', [JabatanController::class, 'index'])->name('index');

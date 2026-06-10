@@ -66,7 +66,7 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
                                                 </button>
                                             </form>
-                                            <form action="{{ route('jabatan.force-delete', $j->id_jabatan) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN jabatan ini? Semua karyawan dengan jabatan ini akan kehilangan relasi jabatan.')">
+                                            <form action="{{ route('jabatan.forceDelete', $j->id_jabatan) }}" method="POST" onsubmit="return confirm('Hapus PERMANEN jabatan ini? Semua karyawan dengan jabatan ini akan kehilangan relasi jabatan.')">
                                                 @csrf
                                                 <button type="submit" class="p-1.5 rounded-lg hover:bg-red-100 text-red-600 hover:text-red-700 transition cursor-pointer" title="Hapus Permanen">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
