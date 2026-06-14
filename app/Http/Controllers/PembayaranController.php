@@ -106,22 +106,40 @@ class PembayaranController extends Controller
     public function scanBarcode(Request $request, $meja_id)
     {
         $request->validate([
-            'barcode' => 'required|string',
+            'barcode' => 'required_without:id_menu',
+            'id_menu' => 'required_without:barcode',
         ]);
 
         $meja = Meja::find($meja_id);
         if (!$meja) {
+            if ($request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Meja tidak ditemukan.'], 404);
+            }
             return back()->with('error', 'Meja tidak ditemukan.');
         }
 
-        // Find the menu item by barcode (kode_menu)
-        $menu = Menu::where('kode_menu', $request->barcode)->first();
+        $menu = null;
+        if ($request->has('id_menu')) {
+            $menu = Menu::find($request->id_menu);
+        } elseif ($request->has('barcode')) {
+            $menu = Menu::where('kode_menu', $request->barcode)->first();
+            if (!$menu && is_numeric($request->barcode)) {
+                $menu = Menu::find($request->barcode);
+            }
+        }
 
         if (!$menu) {
-            return back()->with('error', 'Menu dengan barcode "' . $request->barcode . '" tidak ditemukan.');
+            $identifier = $request->id_menu ?: $request->barcode;
+            if ($request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Menu "' . $identifier . '" tidak ditemukan.'], 404);
+            }
+            return back()->with('error', 'Menu "' . $identifier . '" tidak ditemukan.');
         }
 
         if ($menu->status === 'habis') {
+            if ($request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Menu "' . $menu->nama_menu . '" sedang habis.'], 400);
+            }
             return back()->with('error', 'Menu "' . $menu->nama_menu . '" sedang habis.');
         }
 
@@ -152,6 +170,13 @@ class PembayaranController extends Controller
         if ($meja->status !== 'terisi') {
             $meja->status = 'terisi';
             $meja->save();
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Menu "' . $menu->nama_menu . '" berhasil ditambahkan.'
+            ]);
         }
 
         return back()->with('success', 'Menu "' . $menu->nama_menu . '" berhasil ditambahkan.');

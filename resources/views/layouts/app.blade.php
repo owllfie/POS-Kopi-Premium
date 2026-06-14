@@ -70,13 +70,13 @@
         }
     @endphp
 </head>
-<body class="bg-coffee-cream font-sans min-h-screen text-coffee-text antialiased" x-data="{ sidebarOpen: {{ in_array($roleName, ['kasir', 'chef']) ? 'false' : 'true' }} }">
+<body class="bg-coffee-cream font-sans min-h-screen text-coffee-text antialiased">
     <div id="page-styles" style="display: none;">
         @yield('styles')
     </div>
 
     <!-- Main Wrapper -->
-    <div class="flex min-h-screen relative overflow-hidden">
+    <div id="app-root" class="flex min-h-screen relative overflow-hidden" x-data="{ sidebarOpen: {{ in_array($roleName, ['kasir', 'chef']) ? 'false' : 'true' }} }">
         
         @if(!in_array($roleName, ['kasir', 'chef']))
         <!-- Sidebar -->
@@ -227,6 +227,53 @@
                 @yield('content')
             </main>
         </div>
+
+        <!-- Global Receipt Modal Handler -->
+        @if(session()->has('print_receipt_id'))
+            @php $receipt = \App\Models\Pesanan::with(['meja', 'details.menu', 'user'])->find(session('print_receipt_id')); @endphp
+            @if($receipt)
+                <div x-data="{ showReceipt: true }" x-show="showReceipt" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" id="receipt-modal-wrapper">
+                    <div class="bg-white max-w-sm w-full rounded-2xl shadow-2xl p-6 border border-coffee-latte flex flex-col justify-between" @click.away="showReceipt = false">
+                        <div id="printable-receipt-area" class="bg-white text-black p-4 font-mono text-xs border border-dashed border-slate-300">
+                            <div class="text-center space-y-1 mb-4">
+                                <h2 class="text-sm font-bold uppercase tracking-wider">Kopi Premium Resto</h2>
+                                <p class="text-[10px]">Jl. Cokelat Hangat No. 12</p>
+                                <div class="border-b border-dashed border-slate-300 my-2"></div>
+                            </div>
+                            <div class="space-y-1 text-[10px]">
+                                <div class="flex justify-between"><span>No: {{ $receipt->kode_struk }}</span><span>Meja: {{ $receipt->meja->nomor_meja == 99 ? 'Takeaway' : $receipt->meja->nomor_meja }}</span></div>
+                                <div class="flex justify-between"><span>Kasir: {{ $receipt->user ? $receipt->user->username : 'System' }}</span><span>Tgl: {{ $receipt->created_at->format('d/m/y H:i') }}</span></div>
+                            </div>
+                            <div class="border-b border-dashed border-slate-300 my-2"></div>
+                            <div class="space-y-2">
+                                @foreach($receipt->details as $item)
+                                    <div><div class="flex justify-between"><span class="font-semibold">{{ $item->menu->nama_menu }}</span><span>Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span></div><div class="text-[10px] text-slate-500">{{ $item->jumlah }} x Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}</div></div>
+                                @endforeach
+                            </div>
+                            <div class="border-b border-dashed border-slate-300 my-2"></div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between"><span>Subtotal:</span><span>Rp {{ number_format($receipt->total_harga, 0, ',', '.') }}</span></div>
+                                @if($receipt->diskon > 0)
+                                    <div class="flex justify-between text-slate-600"><span>Diskon:</span><span>- Rp {{ number_format($receipt->diskon, 0, ',', '.') }}</span></div>
+                                @endif
+                                <div class="flex justify-between"><span>Pajak:</span><span>Rp {{ number_format($receipt->pajak, 0, ',', '.') }}</span></div>
+                                <div class="flex justify-between font-bold text-sm border-t border-dotted border-slate-300 pt-1.5 mt-1"><span>TOTAL BAYAR:</span><span>Rp {{ number_format($receipt->total_bayar, 0, ',', '.') }}</span></div>
+                            </div>
+                            <div class="border-b border-dashed border-slate-300 my-2"></div>
+                            <div class="text-center text-[9px] text-slate-500 space-y-0.5 mt-2">
+                                <p class="font-bold">METODE: {{ strtoupper($receipt->metode_pembayaran) }}</p>
+                                <p>Terima kasih atas kunjungan Anda!</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-4 receipt-no-print">
+                            <button onclick="window.print()" class="w-1/2 py-2.5 bg-coffee-dark hover:bg-coffee-medium text-white text-xs font-bold rounded-xl shadow transition">Cetak Struk</button>
+                            <button @click="showReceipt = false" class="w-1/2 py-2.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-dark border border-coffee-light text-xs font-bold rounded-xl transition">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+                <style>@media print { body * { visibility: hidden; } #printable-receipt-area, #printable-receipt-area * { visibility: visible; } #printable-receipt-area { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); width: 80mm; margin: 0; padding: 10px; border: none !important; } .receipt-no-print { display: none !important; } #receipt-modal-wrapper { background: white !important; backdrop-filter: none !important; } }</style>
+            @endif
+        @endif
     </div>
 
     <!-- Live clock & Helpers -->
@@ -240,7 +287,7 @@
                 clockEl.textContent = `${days[now.getDay()]}, ${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()} — ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
             }
         }
-        setInterval(updateClock, 1000);
+        (window.nativeSetInterval || window.setInterval)(updateClock, 1000);
         updateClock();
 
         function formatRupiahHelper(value) {
@@ -269,53 +316,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Global Receipt Modal Handler -->
-    @if(session()->has('print_receipt_id'))
-        @php $receipt = \App\Models\Pesanan::with(['meja', 'details.menu', 'user'])->find(session('print_receipt_id')); @endphp
-        @if($receipt)
-            <div x-data="{ showReceipt: true }" x-show="showReceipt" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" id="receipt-modal-wrapper">
-                <div class="bg-white max-w-sm w-full rounded-2xl shadow-2xl p-6 border border-coffee-latte flex flex-col justify-between" @click.away="showReceipt = false">
-                    <div id="printable-receipt-area" class="bg-white text-black p-4 font-mono text-xs border border-dashed border-slate-300">
-                        <div class="text-center space-y-1 mb-4">
-                            <h2 class="text-sm font-bold uppercase tracking-wider">Kopi Premium Resto</h2>
-                            <p class="text-[10px]">Jl. Cokelat Hangat No. 12</p>
-                            <div class="border-b border-dashed border-slate-300 my-2"></div>
-                        </div>
-                        <div class="space-y-1 text-[10px]">
-                            <div class="flex justify-between"><span>No: {{ $receipt->kode_struk }}</span><span>Meja: {{ $receipt->meja->nomor_meja == 99 ? 'Takeaway' : $receipt->meja->nomor_meja }}</span></div>
-                            <div class="flex justify-between"><span>Kasir: {{ $receipt->user ? $receipt->user->username : 'System' }}</span><span>Tgl: {{ $receipt->created_at->format('d/m/y H:i') }}</span></div>
-                        </div>
-                        <div class="border-b border-dashed border-slate-300 my-2"></div>
-                        <div class="space-y-2">
-                            @foreach($receipt->details as $item)
-                                <div><div class="flex justify-between"><span class="font-semibold">{{ $item->menu->nama_menu }}</span><span>Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span></div><div class="text-[10px] text-slate-500">{{ $item->jumlah }} x Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}</div></div>
-                            @endforeach
-                        </div>
-                        <div class="border-b border-dashed border-slate-300 my-2"></div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between"><span>Subtotal:</span><span>Rp {{ number_format($receipt->total_harga, 0, ',', '.') }}</span></div>
-                            @if($receipt->diskon > 0)
-                                <div class="flex justify-between text-slate-600"><span>Diskon:</span><span>- Rp {{ number_format($receipt->diskon, 0, ',', '.') }}</span></div>
-                            @endif
-                            <div class="flex justify-between"><span>Pajak:</span><span>Rp {{ number_format($receipt->pajak, 0, ',', '.') }}</span></div>
-                            <div class="flex justify-between font-bold text-sm border-t border-dotted border-slate-300 pt-1.5 mt-1"><span>TOTAL BAYAR:</span><span>Rp {{ number_format($receipt->total_bayar, 0, ',', '.') }}</span></div>
-                        </div>
-                        <div class="border-b border-dashed border-slate-300 my-2"></div>
-                        <div class="text-center text-[9px] text-slate-500 space-y-0.5 mt-2">
-                            <p class="font-bold">METODE: {{ strtoupper($receipt->metode_pembayaran) }}</p>
-                            <p>Terima kasih atas kunjungan Anda!</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 mt-4 receipt-no-print">
-                        <button onclick="window.print()" class="w-1/2 py-2.5 bg-coffee-dark hover:bg-coffee-medium text-white text-xs font-bold rounded-xl shadow transition">Cetak Struk</button>
-                        <button @click="showReceipt = false" class="w-1/2 py-2.5 bg-coffee-cream hover:bg-coffee-latte text-coffee-dark border border-coffee-light text-xs font-bold rounded-xl transition">Tutup</button>
-                    </div>
-                </div>
-            </div>
-            <style>@media print { body * { visibility: hidden; } #printable-receipt-area, #printable-receipt-area * { visibility: visible; } #printable-receipt-area { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); width: 80mm; margin: 0; padding: 10px; border: none !important; } .receipt-no-print { display: none !important; } #receipt-modal-wrapper { background: white !important; backdrop-filter: none !important; } }</style>
-        @endif
-    @endif
 
     <script>
         let currentCropper = null;

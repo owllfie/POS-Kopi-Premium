@@ -64,15 +64,93 @@
         filterMenus() {
             return {{ json_encode($menus) }}.filter(menu => {
                 const matchesSearch = menu.nama_menu.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
-                                     menu.kode_menu.toLowerCase().includes(this.searchQuery.toLowerCase());
+                                     (menu.kode_menu && menu.kode_menu.toLowerCase().includes(this.searchQuery.toLowerCase()));
                 const matchesCategory = this.selectedCategory === 'all' || menu.id_kategori == this.selectedCategory;
                 return matchesSearch && matchesCategory;
             });
         },
-        addByClick(kode) {
-            const input = document.getElementById('barcode_input');
-            input.value = kode;
-            input.closest('form').submit();
+        async addByClick(menu) {
+            if (!menu || !menu.id_menu) return;
+            const formData = new FormData();
+            formData.append('id_menu', menu.id_menu);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            try {
+                const response = await fetch('{{ route("pesanan.scan-barcode", $meja->id_meja) }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    if (window.loadPage) {
+                        await window.loadPage(window.location.href, false);
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    try {
+                        const errData = await response.json();
+                        alert(errData.message || 'Gagal menambahkan menu.');
+                    } catch {
+                        alert('Gagal menambahkan menu.');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi.');
+            }
+        },
+        async submitBarcode(form) {
+            if (!form) return;
+            const formData = new FormData(form);
+            const barcodeInput = form.querySelector('#barcode_input');
+            const originalPlaceholder = barcodeInput ? barcodeInput.placeholder : 'Ketik/Scan...';
+            
+            if (barcodeInput) {
+                barcodeInput.disabled = true;
+                barcodeInput.placeholder = 'Menambahkan...';
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    if (window.loadPage) {
+                        await window.loadPage(window.location.href, false);
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    try {
+                        const errData = await response.json();
+                        alert(errData.message || 'Gagal menambahkan menu.');
+                    } catch {
+                        alert('Gagal menambahkan menu.');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi.');
+            } finally {
+                const freshInput = document.getElementById('barcode_input');
+                if (freshInput) {
+                    freshInput.disabled = false;
+                    freshInput.placeholder = originalPlaceholder;
+                    freshInput.value = '';
+                    freshInput.focus();
+                }
+            }
         }
     }">
         <div class="max-w-full mx-auto px-2 grid grid-cols-1 lg:grid-cols-12 gap-3" x-data="paymentProcessor({{ $subtotal }}, {{ $pajakPersen }}, {{ json_encode($activePromos) }}, {{ json_encode($pendingItems) }}, {{ $meja->id_meja }})">
@@ -104,7 +182,7 @@
                     <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                         <template x-for="menu in filterMenus()" :key="menu.id_menu">
                             <div 
-                                @click="addByClick(menu.kode_menu)"
+                                @click="addByClick(menu)"
                                 class="p-1.5 border border-coffee-latte rounded-lg hover:bg-coffee-cream cursor-pointer transition text-center group bg-white"
                             >
                                 <div class="w-full aspect-square bg-coffee-cream rounded-md overflow-hidden mb-1 border border-coffee-latte/50">
@@ -145,7 +223,12 @@
 
                     <div class="bg-white rounded-xl border border-coffee-latte p-3 coffee-card shadow-sm">
                         <label class="text-[9px] font-bold text-coffee-medium uppercase mb-1">Scan Menu</label>
-                        <form action="{{ route('pesanan.scan-barcode', $meja->id_meja) }}" method="POST" class="relative">
+                        <form 
+                            action="{{ route('pesanan.scan-barcode', $meja->id_meja) }}" 
+                            method="POST" 
+                            class="relative"
+                            @submit.prevent="submitBarcode($el)"
+                        >
                             @csrf
                             <input 
                                 type="text" 

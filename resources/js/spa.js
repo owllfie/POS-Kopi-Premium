@@ -3,6 +3,94 @@
  * Enables instant transitions and asynchronous content loading.
  */
 
+// Save native DOM and Window APIs before overriding
+const nativeWindowAddEventListener = window.addEventListener;
+const nativeDocumentAddEventListener = document.addEventListener;
+const nativeWindowRemoveEventListener = window.removeEventListener;
+const nativeDocumentRemoveEventListener = document.removeEventListener;
+
+const nativeSetInterval = window.setInterval;
+const nativeClearInterval = window.clearInterval;
+const nativeSetTimeout = window.setTimeout;
+const nativeClearTimeout = window.clearTimeout;
+
+// Track active page-level event listeners and timers
+const activeListeners = [];
+const activeIntervals = [];
+const activeTimeouts = [];
+
+window.addEventListener = function(type, listener, options) {
+    activeListeners.push({ target: window, type, listener, options });
+    nativeWindowAddEventListener.call(window, type, listener, options);
+};
+
+document.addEventListener = function(type, listener, options) {
+    activeListeners.push({ target: document, type, listener, options });
+    nativeDocumentAddEventListener.call(document, type, listener, options);
+};
+
+window.removeEventListener = function(type, listener, options) {
+    const index = activeListeners.findIndex(l => l.target === window && l.type === type && l.listener === listener);
+    if (index !== -1) activeListeners.splice(index, 1);
+    nativeWindowRemoveEventListener.call(window, type, listener, options);
+};
+
+document.removeEventListener = function(type, listener, options) {
+    const index = activeListeners.findIndex(l => l.target === document && l.type === type && l.listener === listener);
+    if (index !== -1) activeListeners.splice(index, 1);
+    nativeDocumentRemoveEventListener.call(document, type, listener, options);
+};
+
+window.setInterval = function(handler, timeout, ...args) {
+    const id = nativeSetInterval.call(window, handler, timeout, ...args);
+    activeIntervals.push(id);
+    return id;
+};
+
+window.clearInterval = function(id) {
+    const index = activeIntervals.indexOf(id);
+    if (index !== -1) activeIntervals.splice(index, 1);
+    nativeClearInterval.call(window, id);
+};
+
+window.setTimeout = function(handler, timeout, ...args) {
+    const id = nativeSetTimeout.call(window, handler, timeout, ...args);
+    activeTimeouts.push(id);
+    return id;
+};
+
+window.clearTimeout = function(id) {
+    const index = activeTimeouts.indexOf(id);
+    if (index !== -1) activeTimeouts.splice(index, 1);
+    nativeClearTimeout.call(window, id);
+};
+
+// Expose native functions globally for persistent layout elements (e.g. live clock)
+window.nativeSetInterval = nativeSetInterval;
+window.nativeClearInterval = nativeClearInterval;
+window.nativeSetTimeout = nativeSetTimeout;
+window.nativeClearTimeout = nativeClearTimeout;
+
+function clearPageStates() {
+    // 1. Clear active event listeners
+    activeListeners.forEach(({ target, type, listener, options }) => {
+        if (target === window) {
+            nativeWindowRemoveEventListener.call(window, type, listener, options);
+        } else if (target === document) {
+            nativeDocumentRemoveEventListener.call(document, type, listener, options);
+        }
+    });
+    activeListeners.length = 0;
+
+    // 2. Clear active intervals
+    activeIntervals.forEach(id => nativeClearInterval.call(window, id));
+    activeIntervals.length = 0;
+
+    // 3. Clear active timeouts
+    activeTimeouts.forEach(id => nativeClearTimeout.call(window, id));
+    activeTimeouts.length = 0;
+}
+
 // Inject styles dynamically for progress bar and loading states
 const styleEl = document.createElement('style');
 styleEl.textContent = `
@@ -77,10 +165,10 @@ function startProgress() {
     progressBar.style.background = '#d97706'; // Reset color to gold
     progressBar.style.width = '0%';
     progressBar.style.opacity = '1';
-    clearInterval(progressInterval);
+    nativeClearInterval(progressInterval);
     
     let width = 0;
-    progressInterval = setInterval(() => {
+    progressInterval = nativeSetInterval(() => {
         if (width < 85) {
             width += Math.random() * 5 + 1.5;
             progressBar.style.width = `${width}%`;
@@ -89,23 +177,23 @@ function startProgress() {
 }
 
 function completeProgress() {
-    clearInterval(progressInterval);
+    nativeClearInterval(progressInterval);
     progressBar.style.width = '100%';
-    setTimeout(() => {
+    nativeSetTimeout(() => {
         progressBar.style.opacity = '0';
-        setTimeout(() => {
+        nativeSetTimeout(() => {
             progressBar.style.width = '0%';
         }, 300);
     }, 200);
 }
 
 function failProgress() {
-    clearInterval(progressInterval);
+    nativeClearInterval(progressInterval);
     progressBar.style.background = '#ef4444'; // Red for error
     progressBar.style.width = '100%';
-    setTimeout(() => {
+    nativeSetTimeout(() => {
         progressBar.style.opacity = '0';
-        setTimeout(() => {
+        nativeSetTimeout(() => {
             progressBar.style.width = '0%';
         }, 300);
     }, 200);
@@ -115,13 +203,12 @@ function failProgress() {
  * Loads a page content via AJAX and replaces specific sections.
  */
 async function loadPage(url, pushToHistory = true, clickedLink = null) {
-    const mainEl = document.querySelector('main');
-    const pageTitleEl = document.getElementById('page-title');
-    const sidebarNavEl = document.getElementById('sidebar-nav');
+    const appRootEl = document.getElementById('app-root');
     const pageStylesEl = document.getElementById('page-styles');
     const pageScriptsEl = document.getElementById('page-scripts');
 
     // Add loading states
+    const mainEl = appRootEl ? appRootEl.querySelector('main') : null;
     if (mainEl) mainEl.classList.add('spa-loading');
     if (clickedLink) clickedLink.classList.add('spa-nav-loading');
     startProgress();
@@ -147,21 +234,17 @@ async function loadPage(url, pushToHistory = true, clickedLink = null) {
         const doc = parser.parseFromString(html, 'text/html');
 
         // Extract key components
-        const newMain = doc.querySelector('main');
-        const newPageTitle = doc.getElementById('page-title');
-        const newSidebarNav = doc.getElementById('sidebar-nav');
+        const newAppRoot = doc.getElementById('app-root');
         const newPageStyles = doc.getElementById('page-styles');
         const newPageScripts = doc.getElementById('page-scripts');
 
         const finalUrl = response.url || url;
 
         // Fallback to standard page load if structure is different
-        if (!newMain) {
+        if (!newAppRoot) {
             window.location.href = finalUrl;
             return;
         }
-
-
 
         // Update URL and browser history
         if (pushToHistory) {
@@ -176,32 +259,35 @@ async function loadPage(url, pushToHistory = true, clickedLink = null) {
             pageStylesEl.innerHTML = newPageStyles.innerHTML;
         }
 
-        // Update Page Title Header
-        if (pageTitleEl && newPageTitle) {
-            pageTitleEl.innerHTML = newPageTitle.innerHTML;
-        }
-
-        // Update Sidebar Active Class
-        if (sidebarNavEl && newSidebarNav) {
-            sidebarNavEl.innerHTML = newSidebarNav.innerHTML;
-        }
-
-        // Update Main Content Container with Premium Enter Animation
-        if (mainEl && newMain) {
-            mainEl.classList.remove('spa-loading');
-            mainEl.classList.add('spa-content-enter');
+        // Update App Root Container with Premium Enter Animation
+        if (appRootEl && newAppRoot) {
+            appRootEl.classList.remove('spa-loading');
+            appRootEl.classList.add('spa-content-enter');
             
-            mainEl.innerHTML = newMain.innerHTML;
-            mainEl.scrollTop = 0; // Reset scroll position
+            // Clean up old event listeners and timers before swapping DOM
+            clearPageStates();
+
+            // Swap class name
+            appRootEl.className = newAppRoot.className;
+            // Swap all attributes (including x-data)
+            Array.from(appRootEl.attributes).forEach(attr => appRootEl.removeAttribute(attr.name));
+            Array.from(newAppRoot.attributes).forEach(attr => appRootEl.setAttribute(attr.name, attr.value));
+            
+            appRootEl.innerHTML = newAppRoot.innerHTML;
+            
+            const newMainEl = appRootEl.querySelector('main');
+            if (newMainEl) {
+                newMainEl.scrollTop = 0; // Reset scroll position
+            }
 
             // Trigger reflow & animation frames
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    mainEl.classList.remove('spa-content-enter');
-                    mainEl.classList.add('spa-content-enter-active');
+                    appRootEl.classList.remove('spa-content-enter');
+                    appRootEl.classList.add('spa-content-enter-active');
                     
-                    setTimeout(() => {
-                        mainEl.classList.remove('spa-content-enter-active');
+                    nativeSetTimeout(() => {
+                        appRootEl.classList.remove('spa-content-enter-active');
                     }, 400);
                 });
             });
@@ -253,16 +339,19 @@ async function loadPage(url, pushToHistory = true, clickedLink = null) {
             executeScripts(pageScriptsEl);
         }
 
-        // Also search and execute any script tags inside mainEl (e.g. inline scripts in page views)
-        if (mainEl) {
-            executeScripts(mainEl);
+        // Also search and execute any script tags inside appRootEl (e.g. inline scripts in page views)
+        if (appRootEl) {
+            executeScripts(appRootEl);
         }
 
         // Restore original event listeners
         document.addEventListener = originalDocAddEventListener;
         window.addEventListener = originalWinAddEventListener;
 
-
+        // Initialize Alpine.js on the new appRootEl content
+        if (window.Alpine) {
+            window.Alpine.initTree(appRootEl);
+        }
 
         // Re-run LazyLoader scan
         if (window.LazyLoad) {
@@ -279,13 +368,13 @@ async function loadPage(url, pushToHistory = true, clickedLink = null) {
         // Fallback to normal page load
         window.location.href = url;
     } finally {
-        if (mainEl) mainEl.classList.remove('spa-loading');
+        if (appRootEl) appRootEl.classList.remove('spa-loading');
         if (clickedLink) clickedLink.classList.remove('spa-nav-loading');
     }
 }
 
 // Intercept all same-origin link clicks
-document.addEventListener('click', (e) => {
+nativeDocumentAddEventListener.call(document, 'click', (e) => {
     const link = e.target.closest('a');
     if (!link) return;
 
@@ -317,6 +406,6 @@ document.addEventListener('click', (e) => {
 });
 
 // Handle browser Back/Forward navigation
-window.addEventListener('popstate', (e) => {
+nativeWindowAddEventListener.call(window, 'popstate', (e) => {
     loadPage(window.location.href, false);
 });

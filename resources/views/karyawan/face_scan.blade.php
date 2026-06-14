@@ -243,6 +243,11 @@
                 // Start timer immediately
                 this.resetInactivityTimer();
                 @endif
+
+                // Listen to SPA navigation to clean up webcam stream and scanning interval
+                window.addEventListener('spa:navigated', () => {
+                    this.stopCameraAndScanning();
+                }, { once: true });
             },
 
             resetInactivityTimer() {
